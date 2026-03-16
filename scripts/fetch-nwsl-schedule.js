@@ -71,15 +71,19 @@ const BROADCASTER_MAP = {
   'victory+':       'VIC',   'victory plus':  'VIC',
 };
 
-function broadcasterToPlatform(names) {
+function broadcastersToPlatforms(names) {
+  const result = [];
   for (const name of names) {
     const key = (name || '').toLowerCase().trim();
-    if (BROADCASTER_MAP[key]) return BROADCASTER_MAP[key];
-    for (const [k, v] of Object.entries(BROADCASTER_MAP)) {
-      if (key.includes(k)) return v;
+    let id = BROADCASTER_MAP[key];
+    if (!id) {
+      for (const [k, v] of Object.entries(BROADCASTER_MAP)) {
+        if (key.includes(k)) { id = v; break; }
+      }
     }
+    if (id && !result.includes(id)) result.push(id);
   }
-  return null;
+  return result;
 }
 
 // ── Normalize raw API match object (Endeavor format) ─────────────────────
@@ -87,7 +91,7 @@ function normalizeApiMatch(m) {
   const home = m.home || m.homeTeam || {};
   const away = m.away || m.awayTeam || {};
   const broadcasters = extractBroadcasters(m);
-  const platform = broadcasterToPlatform(broadcasters);
+  const platforms    = broadcastersToPlatforms(broadcasters);
 
   return {
     game_id:        `nwsl-${m.matchId || m.id}`,
@@ -105,7 +109,7 @@ function normalizeApiMatch(m) {
     status:         normalizeStatus(m.status || m.matchStatus),
     knockout_game:  false,
     broadcasters,
-    platform,
+    platforms,
     source:         'nwsl-site',
   };
 }
@@ -203,7 +207,7 @@ async function extractFromDOM(page) {
 function domMatchToGame(m) {
   const scoreMatch = m.scoreText.match(/(\d+)\s*[–\-]\s*(\d+)/);
   const broadcasters = [...new Set(m.broadcasters.map(b => b.trim()).filter(Boolean))];
-  const platform = broadcasterToPlatform(broadcasters);
+  const platforms    = broadcastersToPlatforms(broadcasters);
 
   return {
     game_id:        `nwsl-${m.matchId}`,
@@ -221,7 +225,7 @@ function domMatchToGame(m) {
     status:         normalizeStatus(m.status),
     knockout_game:  false,
     broadcasters,
-    platform,
+    platforms,
     source:         'nwsl-dom',
   };
 }

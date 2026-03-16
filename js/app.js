@@ -134,7 +134,7 @@
 
       return {
         id: g.game_id, date, home: g.home_team_id, away: g.away_team_id,
-        venue, platform: assignStreaming(g), score, penaltyNote, label,
+        venue, platforms: [assignStreaming(g)], score, penaltyNote, label,
         status: g.status, attendance: g.attendance, matchday: g.matchday,
         knockout: g.knockout_game,
       };
@@ -157,23 +157,21 @@
 
       if (asaGame) {
         // Override heuristic platform with real broadcaster data
-        if (ng.platform) asaGame.platform = ng.platform;
+        if (ng.platforms && ng.platforms.length > 0) asaGame.platforms = ng.platforms;
       } else if (ng.status === 'PreMatch' && ng.date_time_utc) {
         // Upcoming game not yet in ASA — add it
         const date = parseUTC(ng.date_time_utc);
         if (isNaN(date.getTime())) return;
-        const platform = ng.platform || assignStreaming({
-          date_time_utc: ng.date_time_utc,
-          matchday: ng.matchday || 1,
-          knockout_game: false,
-        });
+        const platforms = (ng.platforms && ng.platforms.length > 0)
+          ? ng.platforms
+          : [assignStreaming({ date_time_utc: ng.date_time_utc, matchday: ng.matchday || 1, knockout_game: false })];
         toAdd.push({
           id:          ng.game_id,
           date,
           home:        ng.home_team_id,
           away:        ng.away_team_id,
           venue:       ng.stadium_name || 'Venue TBD',
-          platform,
+          platforms,
           score:       null,
           penaltyNote: '',
           label:       null,
@@ -296,7 +294,7 @@
       (state.seasonGames[season] || [])
         .filter(m => {
           if (state.filterTeam !== 'all' && m.home !== state.filterTeam && m.away !== state.filterTeam) return false;
-          if (state.filterPlatform !== 'all' && m.platform !== state.filterPlatform) return false;
+          if (state.filterPlatform !== 'all' && !(m.platforms || []).includes(state.filterPlatform)) return false;
           return true;
         })
         .map(m => m.date.toISOString().slice(0, 7))
@@ -469,7 +467,7 @@
   function filterMatches(matches) {
     return matches.filter(m => {
       if (state.filterTeam !== 'all' && m.home !== state.filterTeam && m.away !== state.filterTeam) return false;
-      if (state.filterPlatform !== 'all' && m.platform !== state.filterPlatform) return false;
+      if (state.filterPlatform !== 'all' && !(m.platforms || []).includes(state.filterPlatform)) return false;
       if (state.activeMonth !== 'all' && m.date.toISOString().slice(0, 7) !== state.activeMonth) return false;
       return true;
     });
@@ -524,7 +522,6 @@
     const status   = getMatchStatus(match);
     const home     = state.teamMap[match.home] || fallbackTeam(match.home);
     const away     = state.teamMap[match.away] || fallbackTeam(match.away);
-    const platform = PLATFORM_MAP[match.platform] || PLATFORM_MAP['NWSL'];
     const isRevealed = !state.spoilersHidden || state.revealedMatches.has(match.id);
 
     const card = document.createElement('article');
@@ -532,8 +529,11 @@
       + (status === 'final' || status === 'abandoned' ? ' is-past' : '')
       + (status === 'live'                            ? ' is-live'  : '');
 
-    const statusText = { upcoming: 'Upcoming', live: '● Live', final: 'Final', abandoned: 'Abandoned' }[status];
-    const platStyle  = `background:${platform.color};color:${platform.textColor};`;
+    const statusText   = { upcoming: 'Upcoming', live: '● Live', final: 'Final', abandoned: 'Abandoned' }[status];
+    const platBadges   = (match.platforms || [])
+      .map(id => PLATFORM_MAP[id]).filter(Boolean)
+      .map(p => `<span class="platform-badge" style="background:${p.color};color:${p.textColor};" title="${p.name}">${p.icon}</span>`)
+      .join('');
     const attendHtml = (status === 'final' && match.attendance && isRevealed)
       ? `<div class="card-attendance-row"><span class="card-attendance">🏟 ${match.attendance.toLocaleString()} fans</span></div>`
       : '';
@@ -556,7 +556,7 @@
       </div>
       <div class="card-footer">
         <span class="card-venue" title="${match.venue}">📍 ${match.venue}</span>
-        <span class="platform-badge" style="${platStyle}" title="${platform.name}">${platform.icon}</span>
+        <div class="platform-badges">${platBadges || '<span class="platform-badge" style="background:#2a2a3e;color:#fff;" title="Unknown">?</span>'}</div>
       </div>
       ${attendHtml}
       ${match.label ? `<div class="card-special-label">${match.label}</div>` : ''}

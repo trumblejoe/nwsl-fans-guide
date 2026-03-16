@@ -690,6 +690,13 @@ a:hover { color: var(--gold); }
   white-space: nowrap;
 }
 
+.platform-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .platform-badge {
   display: inline-flex;
   align-items: center;
@@ -700,7 +707,6 @@ a:hover { color: var(--gold); }
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  flex-shrink: 0;
   white-space: nowrap;
 }
 
