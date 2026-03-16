@@ -18,13 +18,14 @@ const NWSL_API = (() => {
   return {
     SEASONS,
     async loadAll() {
-      const [teams, stadia, ...seasonArrays] = await Promise.all([
+      const [teams, stadia, nwslSchedule, ...seasonArrays] = await Promise.all([
         get('teams.json'),
         get('stadia.json'),
+        get('nwsl-schedule.json').catch(() => ({ games: [] })),
         ...SEASONS.map(s => get(`games-${s}.json`).catch(() => [])),
       ]);
       const games = Object.fromEntries(SEASONS.map((s, i) => [s, seasonArrays[i]]));
-      return { teams, stadia, games };
+      return { teams, stadia, games, nwslSchedule };
     }
   };
 })();

@@ -61,7 +61,7 @@
     showLoadingState();
 
     try {
-      const { teams, stadia, games } = await NWSL_API.loadAll();
+      const { teams, stadia, games, nwslSchedule } = await NWSL_API.loadAll();
       buildLookupMaps(teams, stadia);
 
       NWSL_API.SEASONS.forEach(year => {
@@ -70,6 +70,11 @@
           ? normalizeGames(raw)
           : [];
       });
+
+      // Overlay real broadcaster data + add upcoming games from nwslsoccer.com scrape
+      if (nwslSchedule && Array.isArray(nwslSchedule.games) && nwslSchedule.games.length > 0) {
+        state.seasonGames['2026'] = mergeNwslSchedule(state.seasonGames['2026'], nwslSchedule.games);
+      }
 
       // Seasons with data, newest first
       state.availableSeasons = NWSL_API.SEASONS
@@ -137,6 +142,53 @@
   }
 
   // ----------------------------------------------------------
+  //  Merge NWSL schedule (broadcaster data + upcoming games)
+  // ----------------------------------------------------------
+  function mergeNwslSchedule(asaGames, nwslGames) {
+    // Index ASA games by "homeId_awayId" for fast lookup
+    const byTeams = new Map();
+    asaGames.forEach(g => byTeams.set(`${g.home}_${g.away}`, g));
+
+    const toAdd = [];
+    nwslGames.forEach(ng => {
+      if (!ng.home_team_id || !ng.away_team_id) return;
+      const key     = `${ng.home_team_id}_${ng.away_team_id}`;
+      const asaGame = byTeams.get(key);
+
+      if (asaGame) {
+        // Override heuristic platform with real broadcaster data
+        if (ng.platform) asaGame.platform = ng.platform;
+      } else if (ng.status === 'PreMatch' && ng.date_time_utc) {
+        // Upcoming game not yet in ASA — add it
+        const date = parseUTC(ng.date_time_utc);
+        if (isNaN(date.getTime())) return;
+        const platform = ng.platform || assignStreaming({
+          date_time_utc: ng.date_time_utc,
+          matchday: ng.matchday || 1,
+          knockout_game: false,
+        });
+        toAdd.push({
+          id:          ng.game_id,
+          date,
+          home:        ng.home_team_id,
+          away:        ng.away_team_id,
+          venue:       ng.stadium_name || 'Venue TBD',
+          platform,
+          score:       null,
+          penaltyNote: '',
+          label:       null,
+          status:      'PreMatch',
+          attendance:  null,
+          matchday:    ng.matchday,
+          knockout:    false,
+        });
+      }
+    });
+
+    return [...asaGames, ...toAdd].sort((a, b) => a.date - b.date);
+  }
+
+  // ----------------------------------------------------------
   //  Season tabs
   // ----------------------------------------------------------
   function buildSeasonTabs() {
@@ -162,8 +214,8 @@
   function switchSeason(year, initial = false) {
     state.activeSeason    = year;
     state.revealedMatches = new Set();
-    // Hide scores by default only for the newest (current) season
-    state.spoilersHidden  = (year === state.availableSeasons[0]);
+    // Always hide scores by default
+    state.spoilersHidden  = true;
 
     // Reset filters unless this is the very first load
     if (!initial) {
