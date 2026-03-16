@@ -1,446 +1,126 @@
-// ============================================================
-//  NWSL Fan's Guide — Data Layer
-//  All schedule and streaming data is hardcoded here.
-// ============================================================
+/* ============================================================
+   NWSL Fan's Guide — Static Data Layer
+   Team colors keyed by API team_id.
+   Streaming platform metadata + assignment logic.
+   Schedule data comes live from NWSL_API (api.js).
+   ============================================================ */
 
-const NWSL_DATA = {
+const NWSL_STATIC = {
 
   // ----------------------------------------------------------
-  //  Teams
+  //  Team colors — keyed by team_id from ASA API
   // ----------------------------------------------------------
-  teams: [
-    { id: "POR", name: "Portland Thorns FC",       color: "#8B1A1A", bg: "#6B1212" },
-    { id: "KC",  name: "Kansas City Current",       color: "#00A3E0", bg: "#005F8E" },
-    { id: "NJY", name: "NJ/NY Gotham FC",           color: "#1C2B4A", bg: "#0D1F3C" },
-    { id: "CHI", name: "Chicago Red Stars",          color: "#C8102E", bg: "#9B0D24" },
-    { id: "SEA", name: "OL Reign FC",               color: "#002244", bg: "#001533" },
-    { id: "NC",  name: "North Carolina Courage",    color: "#EF3E42", bg: "#C2292D" },
-    { id: "HOU", name: "Houston Dash",              color: "#F5A623", bg: "#C47C0A" },
-    { id: "WAS", name: "Washington Spirit",         color: "#1A3D7C", bg: "#102860" },
-    { id: "ORL", name: "Orlando Pride",             color: "#5A2D8E", bg: "#3D1C66" },
-    { id: "ACF", name: "Angel City FC",             color: "#000000", bg: "#1a1a1a" },
-    { id: "SD",  name: "San Diego Wave FC",         color: "#005EB8", bg: "#003D7A" },
-    { id: "LOU", name: "Racing Louisville FC",      color: "#6CACE4", bg: "#3A7BB5" },
-    { id: "BOS", name: "Boston Legacy FC",          color: "#1E5799", bg: "#0D3D6E" },
-    { id: "UTH", name: "Utah Royals FC",            color: "#8B2FC9", bg: "#5E1A8A" },
-    { id: "BAY", name: "Bay FC",                    color: "#1A6B3C", bg: "#0E4526" },
-  ],
+  teamColors: {
+    '2lqRn34qr0': { bg: '#1B4F8A', color: '#FFFFFF' }, // Denver Summit FC
+    '315VnJ759x': { bg: '#0A2240', color: '#C9A84C' }, // Bay FC
+    '4JMAk47qKg': { bg: '#F47920', color: '#002F65' }, // Houston Dash
+    '4wM4Ezg5jB': { bg: '#003087', color: '#FFFFFF' }, // Boston Breakers (historical)
+    '4wM4rZdqjB': { bg: '#00B2A9', color: '#13294B' }, // Kansas City Current
+    '7VqG1lYMvW': { bg: '#005EB8', color: '#FFFFFF' }, // San Diego Wave FC
+    '7vQ7BBzqD1': { bg: '#002D72', color: '#89CFF0' }, // Seattle Reign FC
+    'KPqjw8PQ6v': { bg: '#1E3E7B', color: '#FFFFFF' }, // Chicago Stars FC
+    'Pk5LeeNqOW': { bg: '#8B1A1A', color: '#FFFFFF' }, // Portland Thorns FC
+    'XVqKeVKM01': { bg: '#5B2C8C', color: '#FFFFFF' }, // Orlando Pride
+    'aDQ0lzvQEv': { bg: '#1B3A6B', color: '#CC0000' }, // Washington Spirit
+    'eV5D2w9QKn': { bg: '#7B2D8B', color: '#FFFFFF' }, // Utah Royals FC
+    'eV5DR6YQKn': { bg: '#6CACE4', color: '#002147' }, // Racing Louisville FC
+    'kRQa8JOqKZ': { bg: '#1A1A1A', color: '#B5985A' }, // Angel City FC
+    'kRQaWa15KZ': { bg: '#003087', color: '#FFFFFF' }, // FC Kansas City (historical)
+    'odMX2OJqYL': { bg: '#0C2340', color: '#FFFFFF' }, // Boston Legacy FC
+    'raMyrr25d2': { bg: '#1C2B4A', color: '#C9A84C' }, // NJ/NY Gotham FC
+    'xW5pwDBMg1': { bg: '#003087', color: '#FFFFFF' }, // Western New York Flash (hist.)
+    'zeQZeazqKw': { bg: '#C8102E', color: '#FFFFFF' }, // North Carolina Courage
+  },
+
+  // Default color for any team not in the map above
+  defaultTeamColor: { bg: '#2a2a3e', color: '#FFFFFF' },
 
   // ----------------------------------------------------------
   //  Streaming platforms
   // ----------------------------------------------------------
   platforms: [
     {
-      id: "CBS",
-      name: "CBS Sports",
-      color: "#003791",
-      textColor: "#ffffff",
-      description: "National broadcast games on CBS network",
-      includes: "National broadcast games, NWSL Championship",
-      subscription: "Free with TV / antenna",
-      icon: "CBS"
+      id: 'CBS',
+      name: 'CBS Sports',
+      color: '#003791',
+      textColor: '#FFFFFF',
+      icon: 'CBS',
+      description: 'National broadcast games on the CBS network',
+      includes: 'National broadcast games, NWSL Championship Final',
+      subscription: 'Free with TV / antenna',
     },
     {
-      id: "PAR",
-      name: "Paramount+",
-      color: "#0064FF",
-      textColor: "#ffffff",
-      description: "Streaming home of NWSL, including exclusive matches",
-      includes: "All NWSL matches, playoffs, archive",
-      subscription: "From $5.99/mo",
-      icon: "P+"
+      id: 'PAR',
+      name: 'Paramount+',
+      color: '#0064FF',
+      textColor: '#FFFFFF',
+      icon: 'P+',
+      description: 'Primary streaming home of the NWSL',
+      includes: 'Select national games, full replays, archive',
+      subscription: 'From $7.99/mo',
     },
     {
-      id: "NWSL",
-      name: "NWSL+",
-      color: "#1DB954",
-      textColor: "#ffffff",
-      description: "Official NWSL streaming platform",
-      includes: "Out-of-market games, replays, highlights",
-      subscription: "Free / Premium tier",
-      icon: "N+"
+      id: 'NWSL',
+      name: 'NWSL+',
+      color: '#17A85A',
+      textColor: '#FFFFFF',
+      icon: 'N+',
+      description: 'Official NWSL streaming platform',
+      includes: 'Out-of-market games, replays, highlights, free tier',
+      subscription: 'Free / Premium tier available',
     },
     {
-      id: "AMZ",
-      name: "Amazon Prime Video",
-      color: "#FF9900",
-      textColor: "#000000",
-      description: "Prime Video exclusive NWSL package",
-      includes: "Select national games, Friday night matches",
-      subscription: "Included with Prime ($14.99/mo)",
-      icon: "PV"
+      id: 'AMZ',
+      name: 'Amazon Prime Video',
+      color: '#FF9900',
+      textColor: '#111111',
+      icon: 'PV',
+      description: 'Friday night NWSL on Prime Video',
+      includes: 'Select Friday night national games',
+      subscription: 'Included with Prime ($14.99/mo)',
     },
     {
-      id: "ESPN",
-      name: "ESPN",
-      color: "#CC0000",
-      textColor: "#ffffff",
-      description: "ESPN network broadcast matches",
-      includes: "Select national games, rivalry matches",
-      subscription: "Requires cable/satellite or live TV",
-      icon: "ESPN"
+      id: 'ESPN',
+      name: 'ESPN',
+      color: '#CC0000',
+      textColor: '#FFFFFF',
+      icon: 'ESPN',
+      description: 'ESPN network broadcast matches',
+      includes: 'Select national games, rivalry matches',
+      subscription: 'Requires cable / live TV provider',
     },
     {
-      id: "ESPNP",
-      name: "ESPN+",
-      color: "#E01010",
-      textColor: "#ffffff",
+      id: 'ESPNP',
+      name: 'ESPN+',
+      color: '#C8001A',
+      textColor: '#FFFFFF',
+      icon: 'E+',
       description: "ESPN's streaming service with NWSL coverage",
-      includes: "Regional games, select national games",
-      subscription: "From $10.99/mo",
-      icon: "E+"
-    }
+      includes: 'Regional games, select national matches',
+      subscription: 'From $11.99/mo',
+    },
   ],
 
   // ----------------------------------------------------------
-  //  Venues
+  //  Streaming assignment
+  //  Heuristic based on NWSL's real broadcast deal structure:
+  //    - Knockout / championship games → CBS (biggest platform)
+  //    - Friday kickoffs           → Amazon Prime
+  //    - Saturday, every 4th match → CBS
+  //    - Saturday other            → Paramount+ / ESPN+ alternating
+  //    - Sunday                    → ESPN+
+  //    - Midweek                   → NWSL+
   // ----------------------------------------------------------
-  venues: {
-    POR: "Providence Park, Portland OR",
-    KC:  "CPKC Stadium, Kansas City MO",
-    NJY: "Red Bull Arena, Harrison NJ",
-    CHI: "Wrigley Field (select), Chicago IL",
-    SEA: "Lumen Field (select), Seattle WA",
-    NC:  "WakeMed Soccer Park, Cary NC",
-    HOU: "Shell Energy Stadium, Houston TX",
-    WAS: "Audi Field, Washington DC",
-    ORL: "Inter&Co Stadium, Orlando FL",
-    ACF: "BMO Stadium, Los Angeles CA",
-    SD:  "Snapdragon Stadium, San Diego CA",
-    LOU: "Lynn Family Stadium, Louisville KY",
-    BOS: "Gillette Stadium (select), Foxborough MA",
-    UTH: "America First Field, Sandy UT",
-    BAY: "PayPal Park, San Jose CA",
+  assignStreaming(game) {
+    const d = new Date(game.date_time_utc.replace(' ', 'T').replace(' UTC', 'Z'));
+    const day = d.getUTCDay();   // 0=Sun 1=Mon … 5=Fri 6=Sat
+    const matchday = game.matchday || 1;
+
+    if (game.knockout_game)                       return 'CBS';
+    if (day === 5)                                return 'AMZ';  // Friday
+    if (day === 6 && matchday % 4 === 0)          return 'CBS';  // select Saturdays
+    if (day === 6)                                return matchday % 2 === 0 ? 'PAR' : 'ESPNP';
+    if (day === 0)                                return 'ESPNP'; // Sunday
+    return 'NWSL';                                               // midweek
   },
-
-  // ----------------------------------------------------------
-  //  2025 Season — ~20 sample matches
-  //  status will be computed at runtime by app.js
-  // ----------------------------------------------------------
-  matches2025: [
-    {
-      id: "25-001",
-      date: "2025-03-15T19:00:00",
-      home: "KC",
-      away: "POR",
-      venue: "CPKC Stadium, Kansas City MO",
-      platform: "PAR",
-      score: null
-    },
-    {
-      id: "25-002",
-      date: "2025-03-15T21:30:00",
-      home: "ACF",
-      away: "SD",
-      venue: "BMO Stadium, Los Angeles CA",
-      platform: "NWSL",
-      score: null
-    },
-    {
-      id: "25-003",
-      date: "2025-03-22T14:00:00",
-      home: "NJY",
-      away: "WAS",
-      venue: "Red Bull Arena, Harrison NJ",
-      platform: "CBS",
-      score: null
-    },
-    {
-      id: "25-004",
-      date: "2025-03-22T16:30:00",
-      home: "NC",
-      away: "CHI",
-      venue: "WakeMed Soccer Park, Cary NC",
-      platform: "PAR",
-      score: null
-    },
-    {
-      id: "25-005",
-      date: "2025-03-29T18:00:00",
-      home: "ORL",
-      away: "HOU",
-      venue: "Inter&Co Stadium, Orlando FL",
-      platform: "ESPNP",
-      score: null
-    },
-    {
-      id: "25-006",
-      date: "2025-04-05T19:30:00",
-      home: "UTH",
-      away: "BAY",
-      venue: "America First Field, Sandy UT",
-      platform: "AMZ",
-      score: null
-    },
-    {
-      id: "25-007",
-      date: "2025-04-05T21:00:00",
-      home: "SEA",
-      away: "POR",
-      venue: "Lumen Field, Seattle WA",
-      platform: "ESPN",
-      score: null
-    },
-    {
-      id: "25-008",
-      date: "2025-04-12T14:00:00",
-      home: "WAS",
-      away: "NJY",
-      venue: "Audi Field, Washington DC",
-      platform: "CBS",
-      score: null
-    },
-    {
-      id: "25-009",
-      date: "2025-04-19T19:00:00",
-      home: "CHI",
-      away: "KC",
-      venue: "SeatGeek Stadium, Bridgeview IL",
-      platform: "PAR",
-      score: null
-    },
-    {
-      id: "25-010",
-      date: "2025-04-26T20:00:00",
-      home: "BAY",
-      away: "ACF",
-      venue: "PayPal Park, San Jose CA",
-      platform: "AMZ",
-      score: null
-    },
-    {
-      id: "25-011",
-      date: "2025-05-03T18:00:00",
-      home: "HOU",
-      away: "NC",
-      venue: "Shell Energy Stadium, Houston TX",
-      platform: "ESPNP",
-      score: null
-    },
-    {
-      id: "25-012",
-      date: "2025-05-10T19:30:00",
-      home: "LOU",
-      away: "BOS",
-      venue: "Lynn Family Stadium, Louisville KY",
-      platform: "NWSL",
-      score: null
-    },
-    {
-      id: "25-013",
-      date: "2025-05-17T14:00:00",
-      home: "POR",
-      away: "SEA",
-      venue: "Providence Park, Portland OR",
-      platform: "CBS",
-      score: null
-    },
-    {
-      id: "25-014",
-      date: "2025-06-07T17:00:00",
-      home: "SD",
-      away: "UTH",
-      venue: "Snapdragon Stadium, San Diego CA",
-      platform: "ESPN",
-      score: null
-    },
-    {
-      id: "25-015",
-      date: "2025-06-14T19:00:00",
-      home: "BOS",
-      away: "WAS",
-      venue: "Gillette Stadium, Foxborough MA",
-      platform: "PAR",
-      score: null
-    },
-    {
-      id: "25-016",
-      date: "2025-07-04T20:00:00",
-      home: "KC",
-      away: "ORL",
-      venue: "CPKC Stadium, Kansas City MO",
-      platform: "AMZ",
-      score: null
-    },
-    {
-      id: "25-017",
-      date: "2025-07-19T19:30:00",
-      home: "NJY",
-      away: "CHI",
-      venue: "Red Bull Arena, Harrison NJ",
-      platform: "ESPNP",
-      score: null
-    },
-    {
-      id: "25-018",
-      date: "2025-08-09T18:00:00",
-      home: "ACF",
-      away: "BAY",
-      venue: "BMO Stadium, Los Angeles CA",
-      platform: "CBS",
-      score: null
-    },
-    {
-      id: "25-019",
-      date: "2025-09-13T15:00:00",
-      home: "SEA",
-      away: "KC",
-      venue: "Lumen Field, Seattle WA",
-      platform: "PAR",
-      score: null
-    },
-    {
-      id: "25-020",
-      date: "2025-10-25T18:00:00",
-      home: "NJY",
-      away: "KC",
-      venue: "Red Bull Arena, Harrison NJ",
-      platform: "CBS",
-      score: null,
-      label: "NWSL Championship Final"
-    }
-  ],
-
-  // ----------------------------------------------------------
-  //  2024 Historical Season — 15 past matches with scores
-  // ----------------------------------------------------------
-  matches2024: [
-    {
-      id: "24-001",
-      date: "2024-03-16T19:00:00",
-      home: "KC",
-      away: "POR",
-      venue: "CPKC Stadium, Kansas City MO",
-      platform: "PAR",
-      score: { home: 2, away: 1 }
-    },
-    {
-      id: "24-002",
-      date: "2024-03-23T14:00:00",
-      home: "NJY",
-      away: "WAS",
-      venue: "Red Bull Arena, Harrison NJ",
-      platform: "CBS",
-      score: { home: 0, away: 0 }
-    },
-    {
-      id: "24-003",
-      date: "2024-04-06T21:00:00",
-      home: "SEA",
-      away: "POR",
-      venue: "Lumen Field, Seattle WA",
-      platform: "ESPN",
-      score: { home: 3, away: 1 }
-    },
-    {
-      id: "24-004",
-      date: "2024-04-13T19:30:00",
-      home: "ACF",
-      away: "SD",
-      venue: "BMO Stadium, Los Angeles CA",
-      platform: "NWSL",
-      score: { home: 1, away: 2 }
-    },
-    {
-      id: "24-005",
-      date: "2024-04-20T18:00:00",
-      home: "NC",
-      away: "CHI",
-      venue: "WakeMed Soccer Park, Cary NC",
-      platform: "PAR",
-      score: { home: 2, away: 0 }
-    },
-    {
-      id: "24-006",
-      date: "2024-05-04T19:00:00",
-      home: "ORL",
-      away: "HOU",
-      venue: "Inter&Co Stadium, Orlando FL",
-      platform: "ESPNP",
-      score: { home: 4, away: 2 }
-    },
-    {
-      id: "24-007",
-      date: "2024-05-11T14:00:00",
-      home: "WAS",
-      away: "BOS",
-      venue: "Audi Field, Washington DC",
-      platform: "CBS",
-      score: { home: 1, away: 1 }
-    },
-    {
-      id: "24-008",
-      date: "2024-05-18T20:00:00",
-      home: "BAY",
-      away: "UTH",
-      venue: "PayPal Park, San Jose CA",
-      platform: "AMZ",
-      score: { home: 3, away: 0 }
-    },
-    {
-      id: "24-009",
-      date: "2024-06-08T19:30:00",
-      home: "CHI",
-      away: "KC",
-      venue: "SeatGeek Stadium, Bridgeview IL",
-      platform: "PAR",
-      score: { home: 0, away: 3 }
-    },
-    {
-      id: "24-010",
-      date: "2024-06-22T17:00:00",
-      home: "SD",
-      away: "ACF",
-      venue: "Snapdragon Stadium, San Diego CA",
-      platform: "ESPN",
-      score: { home: 2, away: 2 }
-    },
-    {
-      id: "24-011",
-      date: "2024-07-06T20:00:00",
-      home: "KC",
-      away: "NJY",
-      venue: "CPKC Stadium, Kansas City MO",
-      platform: "AMZ",
-      score: { home: 1, away: 0 }
-    },
-    {
-      id: "24-012",
-      date: "2024-08-10T18:00:00",
-      home: "POR",
-      away: "SEA",
-      venue: "Providence Park, Portland OR",
-      platform: "CBS",
-      score: { home: 2, away: 1 }
-    },
-    {
-      id: "24-013",
-      date: "2024-08-31T19:30:00",
-      home: "LOU",
-      away: "NC",
-      venue: "Lynn Family Stadium, Louisville KY",
-      platform: "NWSL",
-      score: { home: 0, away: 2 }
-    },
-    {
-      id: "24-014",
-      date: "2024-09-28T14:00:00",
-      home: "ORL",
-      away: "KC",
-      venue: "Inter&Co Stadium, Orlando FL",
-      platform: "CBS",
-      score: { home: 2, away: 3 },
-      label: "NWSL Playoff Semifinal"
-    },
-    {
-      id: "24-015",
-      date: "2024-11-23T15:00:00",
-      home: "ORL",
-      away: "NJY",
-      venue: "CPKC Stadium, Kansas City MO",
-      platform: "CBS",
-      score: { home: 1, away: 0 },
-      label: "NWSL Championship Final"
-    }
-  ]
 };

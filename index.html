@@ -65,7 +65,7 @@
 
           <div class="hero-stat" role="listitem">
             <div class="hero-stat-value" id="hero-matches-count">35</div>
-            <div class="hero-stat-label">Sample Matches</div>
+            <div class="hero-stat-label">Matches</div>
           </div>
 
           <div class="hero-stat-divider" aria-hidden="true"></div>
@@ -194,13 +194,15 @@
   <footer class="footer">
     <div class="footer-logo"><span>NWSL</span> Fan's Guide</div>
     <p class="footer-note">
-      An unofficial fan resource. Schedule data is sample/demonstration data only.
-      For official schedules and streaming information visit
+      An unofficial fan resource. Schedule &amp; stats data provided by
+      <a href="https://www.americansocceranalysis.com" target="_blank" rel="noopener noreferrer">American Soccer Analysis</a>.
+      Streaming assignments are approximate — verify at
       <a href="https://www.nwsl.com" target="_blank" rel="noopener noreferrer">nwsl.com</a>.
     </p>
   </footer>
 
-  <!-- Scripts: data first, then app logic -->
+  <!-- Scripts: api client → static data → app logic -->
+  <script src="js/api.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
 
