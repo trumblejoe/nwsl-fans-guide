@@ -61,7 +61,7 @@
     showLoadingState();
 
     try {
-      const { teams, stadia, games, nwslSchedule } = await NWSL_API.loadAll();
+      const { teams, stadia, games, nwslSchedule, nwslStandings } = await NWSL_API.loadAll();
       buildLookupMaps(teams, stadia);
 
       NWSL_API.SEASONS.forEach(year => {
@@ -91,6 +91,7 @@
     buildPlatformOptions();
     wireEvents();
     updateHeroStats();
+    buildStandings(nwslStandings);
 
     // Default to the most recent season
     switchSeason(state.availableSeasons[0], true);
@@ -625,6 +626,78 @@
         <div class="no-results-text">Could not load schedule data</div>
         <div class="no-results-sub">Visit <a href="https://www.nwsl.com" target="_blank" rel="noopener">nwsl.com</a></div>
       </div>`;
+  }
+
+  // ----------------------------------------------------------
+  //  Standings
+  // ----------------------------------------------------------
+  function buildStandings(data) {
+    const wrap = document.getElementById('standings-wrap');
+    if (!wrap) return;
+
+    const rows = data && Array.isArray(data.teams) ? data.teams : [];
+    if (!rows.length) {
+      wrap.innerHTML = '<p class="standings-empty">Standings not yet available.</p>';
+      return;
+    }
+
+    // Column definitions
+    const cols = [
+      { key: 'rank',  label: '#',   title: 'Rank' },
+      { key: 'team',  label: 'Team',title: 'Team', wide: true },
+      { key: 'p',     label: 'P',   title: 'Played' },
+      { key: 'w',     label: 'W',   title: 'Wins' },
+      { key: 'd',     label: 'D',   title: 'Draws' },
+      { key: 'l',     label: 'L',   title: 'Losses' },
+      { key: 'gf',    label: 'GF',  title: 'Goals For' },
+      { key: 'ga',    label: 'GA',  title: 'Goals Against' },
+      { key: 'gd',    label: 'GD',  title: 'Goal Difference' },
+      { key: 'pts',   label: 'PTS', title: 'Points' },
+      { key: 'form',  label: 'Form',title: 'Recent form (newest right)' },
+    ];
+
+    const thead = `<thead><tr>${cols.map(c =>
+      `<th ${c.wide ? 'class="col-team"' : ''} title="${c.title}">${c.label}</th>`
+    ).join('')}</tr></thead>`;
+
+    const tbody = rows.map(t => {
+      const tc = teamColors[t.asa_team_id] || defaultTeamColor;
+      const badge = `<div class="standings-badge" style="background:${tc.bg};color:${tc.color};">${t.acronym || '?'}</div>`;
+      const formDots = (t.form || []).slice(-5).map(f => {
+        const cls = f === 'W' ? 'form-w' : f === 'D' ? 'form-d' : 'form-l';
+        const lbl = f === 'W' ? 'Win' : f === 'D' ? 'Draw' : 'Loss';
+        return `<span class="form-dot ${cls}" title="${lbl}"></span>`;
+      }).join('');
+      const gdStr = t.gd > 0 ? `+${t.gd}` : String(t.gd);
+      const zoneClass = t.playoff_zone ? ' playoff-zone' : '';
+
+      return `<tr class="standings-row${zoneClass}">
+        <td class="col-rank">${t.rank}</td>
+        <td class="col-team"><div class="standings-team-cell">${badge}<span class="standings-name">${t.name}</span></div></td>
+        <td>${t.p}</td>
+        <td>${t.w}</td>
+        <td>${t.d}</td>
+        <td>${t.l}</td>
+        <td>${t.gf}</td>
+        <td>${t.ga}</td>
+        <td class="${t.gd > 0 ? 'gd-pos' : t.gd < 0 ? 'gd-neg' : ''}">${gdStr}</td>
+        <td class="col-pts">${t.pts}</td>
+        <td class="col-form"><div class="form-dots">${formDots}</div></td>
+      </tr>`;
+    }).join('');
+
+    const lastPlayoff = rows.filter(r => r.playoff_zone).length;
+    const legend = lastPlayoff > 0
+      ? `<div class="standings-legend"><span class="legend-dot playoff-zone"></span> Top ${lastPlayoff} qualify for playoffs</div>`
+      : '';
+
+    wrap.innerHTML = `
+      <div class="standings-scroll">
+        <table class="standings-table" aria-label="2026 NWSL Standings">
+          ${thead}<tbody>${tbody}</tbody>
+        </table>
+      </div>
+      ${legend}`;
   }
 
   // ----------------------------------------------------------

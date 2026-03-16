@@ -1008,3 +1008,161 @@ a:hover { color: var(--gold); }
   color: var(--white-faint);
 }
 
+/* ============================================================
+   STANDINGS
+   ============================================================ */
+
+.standings-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.standings-table thead tr {
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.standings-table th {
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-faint);
+  cursor: default;
+}
+
+.standings-table th.col-team {
+  text-align: left;
+}
+
+.standings-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.standings-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.standings-table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.standings-table td {
+  padding: 10px 12px;
+  text-align: center;
+  color: var(--white-dim);
+}
+
+/* Playoff zone: left border accent */
+.standings-row.playoff-zone {
+  border-left: 3px solid var(--accent);
+}
+
+.standings-row:not(.playoff-zone) {
+  border-left: 3px solid transparent;
+}
+
+/* Rank column */
+.col-rank {
+  color: var(--white-faint);
+  font-size: 0.8rem;
+  min-width: 36px;
+}
+
+/* Team cell */
+.col-team {
+  text-align: left !important;
+  min-width: 180px;
+}
+
+.standings-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.standings-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.standings-name {
+  font-weight: 500;
+  color: var(--white);
+  font-size: 0.85rem;
+}
+
+/* Points column — highlighted */
+.col-pts {
+  font-weight: 700;
+  color: var(--white) !important;
+}
+
+/* Goal difference */
+.gd-pos { color: #4ade80 !important; }
+.gd-neg { color: #f87171 !important; }
+
+/* Form dots */
+.col-form { min-width: 80px; }
+
+.form-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.form-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.form-dot.form-w { background: #4ade80; }
+.form-dot.form-d { background: #facc15; }
+.form-dot.form-l { background: #f87171; }
+
+/* Legend */
+.standings-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.72rem;
+  color: var(--white-faint);
+}
+
+.standings-legend .legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.standings-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--white-faint);
+}
+

@@ -55,6 +55,10 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Fetch NWSL standings (no browser required)
+        run: node scripts/fetch-nwsl-standings.js
+        continue-on-error: true
+
       - name: Fetch NWSL schedule (broadcaster & upcoming game data)
         run: |
           npm install playwright

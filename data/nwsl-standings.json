@@ -1,0 +1,294 @@
+{
+  "fetched_at": "2026-03-16T02:29:46.020Z",
+  "season": "2026",
+  "teams": [
+    {
+      "rank": 1,
+      "asa_team_id": "kRQa8JOqKZ",
+      "name": "Angel City",
+      "acronym": "LA",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 4,
+      "ga": 0,
+      "gd": 4,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 2,
+      "asa_team_id": "4wM4rZdqjB",
+      "name": "Kansas City Current",
+      "acronym": "KC",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 3,
+      "asa_team_id": "zeQZeazqKw",
+      "name": "North Carolina Courage",
+      "acronym": "NC",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 4,
+      "asa_team_id": "315VnJ759x",
+      "name": "Bay",
+      "acronym": "BAY",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 5,
+      "asa_team_id": "7vQ7BBzqD1",
+      "name": "Seattle Reign",
+      "acronym": "SEA",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 6,
+      "asa_team_id": "Pk5LeeNqOW",
+      "name": "Portland Thorns",
+      "acronym": "POR",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 1,
+      "ga": 0,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 7,
+      "asa_team_id": "4JMAk47qKg",
+      "name": "Houston Dash",
+      "acronym": "HOU",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 1,
+      "ga": 0,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 8,
+      "asa_team_id": "raMyrr25d2",
+      "name": "Gotham FC",
+      "acronym": "GFC",
+      "pts": 3,
+      "p": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 1,
+      "ga": 0,
+      "gd": 1,
+      "form": [
+        "W"
+      ],
+      "playoff_zone": true
+    },
+    {
+      "rank": 9,
+      "asa_team_id": "XVqKeVKM01",
+      "name": "Orlando Pride",
+      "acronym": "ORL",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 1,
+      "ga": 2,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 10,
+      "asa_team_id": "eV5DR6YQKn",
+      "name": "Racing Louisville",
+      "acronym": "LOU",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 1,
+      "ga": 2,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 11,
+      "asa_team_id": "eV5D2w9QKn",
+      "name": "Utah Royals",
+      "acronym": "UTA",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 1,
+      "ga": 2,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 12,
+      "asa_team_id": "2lqRn34qr0",
+      "name": "Denver Summit",
+      "acronym": "DEN",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 1,
+      "ga": 2,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 13,
+      "asa_team_id": "7VqG1lYMvW",
+      "name": "San Diego Wave",
+      "acronym": "SD",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 0,
+      "ga": 1,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 14,
+      "asa_team_id": "aDQ0lzvQEv",
+      "name": "Washington Spirit",
+      "acronym": "WAS",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 0,
+      "ga": 1,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 15,
+      "asa_team_id": "odMX2OJqYL",
+      "name": "Boston Legacy",
+      "acronym": "BOS",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 0,
+      "ga": 1,
+      "gd": -1,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    },
+    {
+      "rank": 16,
+      "asa_team_id": "KPqjw8PQ6v",
+      "name": "Chicago Stars",
+      "acronym": "CHI",
+      "pts": 0,
+      "p": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 0,
+      "ga": 4,
+      "gd": -4,
+      "form": [
+        "L"
+      ],
+      "playoff_zone": false
+    }
+  ]
+}
