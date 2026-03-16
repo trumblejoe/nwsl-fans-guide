@@ -753,11 +753,31 @@
   function fmtMonthYear(ym)  { const [y,m] = ym.split('-'); return `${MONTH_NAMES[+m-1]} ${y}`; }
 
   // ----------------------------------------------------------
+  //  Theme switcher
+  // ----------------------------------------------------------
+  function initTheme() {
+    const saved = localStorage.getItem('nwsl-theme') || 'dark';
+    applyTheme(saved);
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+    });
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('nwsl-theme', theme);
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.dataset.theme === theme ? 'true' : 'false');
+    });
+  }
+
+  // ----------------------------------------------------------
   //  Bootstrap
   // ----------------------------------------------------------
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+    document.addEventListener('DOMContentLoaded', () => { initTheme(); boot(); });
   } else {
+    initTheme();
     boot();
   }
 

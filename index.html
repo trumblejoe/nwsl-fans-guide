@@ -5,7 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="NWSL Fan's Guide — schedules, streaming info, and match results for every National Women's Soccer League season." />
   <title>NWSL Fan's Guide</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Apply saved theme before paint to avoid flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('nwsl-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
 
@@ -24,6 +32,20 @@
           <li><a href="#standings">Standings</a></li>
           <li><a href="#streaming">Streaming</a></li>
         </ul>
+        <div class="theme-switcher" role="group" aria-label="Display mode">
+          <button class="theme-btn" data-theme="dark"  aria-pressed="true"  title="Dark mode">
+            <span class="theme-icon" aria-hidden="true">🌙</span>
+            <span class="theme-label">Dark</span>
+          </button>
+          <button class="theme-btn" data-theme="light" aria-pressed="false" title="Light mode">
+            <span class="theme-icon" aria-hidden="true">☀️</span>
+            <span class="theme-label">Light</span>
+          </button>
+          <button class="theme-btn" data-theme="easy"  aria-pressed="false" title="Easy Read — larger text">
+            <span class="theme-icon" aria-hidden="true">A+</span>
+            <span class="theme-label">Easy</span>
+          </button>
+        </div>
       </div>
     </nav>
   </header>

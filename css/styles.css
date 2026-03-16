@@ -31,6 +31,19 @@
 
   --transition: 0.22s ease;
   --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Semantic theme tokens — overridden per-theme below */
+  --bg-glass:      rgba(13,13,26,0.92);
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-card:   rgba(255,255,255,0.07);
+  --border-faint:  rgba(255,255,255,0.06);
+  --border-med:    rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.14);
+  --border-dashed: rgba(255,255,255,0.20);
+  --overlay-hover: rgba(255,255,255,0.07);
+  --overlay-mid:   rgba(255,255,255,0.06);
+  --overlay-faint: rgba(255,255,255,0.04);
+  --overlay-dim:   rgba(255,255,255,0.03);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -102,10 +115,10 @@ a:hover { color: var(--gold); }
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(13,13,26,0.92);
+  background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-subtle);
   padding: 0 24px;
   height: 64px;
   display: flex;
@@ -170,7 +183,7 @@ a:hover { color: var(--gold); }
 
 .navbar-nav a:hover {
   color: var(--white);
-  background: rgba(255,255,255,0.07);
+  background: var(--overlay-hover);
 }
 
 /* ============================================================
@@ -281,7 +294,7 @@ a:hover { color: var(--gold); }
 .hero-stat-divider {
   width: 1px;
   height: 40px;
-  background: rgba(255,255,255,0.12);
+  background: var(--border-med);
 }
 
 /* ============================================================
@@ -293,7 +306,7 @@ a:hover { color: var(--gold); }
   background: var(--navy-card);
   padding: 4px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;          /* Firefox */
@@ -325,7 +338,7 @@ a:hover { color: var(--gold); }
 }
 
 .season-tab:not(.active):hover {
-  background: rgba(255,255,255,0.07);
+  background: var(--overlay-hover);
   color: var(--white);
 }
 
@@ -348,7 +361,7 @@ a:hover { color: var(--gold); }
   padding: 14px 18px;
   background: var(--navy-card);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--border-card);
 }
 
 /* Spoiler toggle button */
@@ -356,8 +369,8 @@ a:hover { color: var(--gold); }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: var(--overlay-mid);
+  border: 1px solid var(--border-strong);
   color: var(--white-dim);
   border-radius: var(--radius-sm);
   padding: 7px 14px;
@@ -370,7 +383,7 @@ a:hover { color: var(--gold); }
 }
 
 .spoiler-btn:hover {
-  background: rgba(255,255,255,0.1);
+  background: var(--overlay-hover);
   color: var(--white);
 }
 
@@ -391,7 +404,7 @@ a:hover { color: var(--gold); }
   padding: 10px 18px;
   background: var(--navy-card);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--border-card);
 }
 
 .month-nav-btn {
@@ -401,7 +414,7 @@ a:hover { color: var(--gold); }
   align-items: center;
   justify-content: center;
   background: var(--navy-raised);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border-med);
   color: var(--white);
   border-radius: var(--radius-sm);
   font-size: 1.2rem;
@@ -425,7 +438,7 @@ a:hover { color: var(--gold); }
 .month-select {
   background: var(--navy-raised);
   color: var(--white);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border-med);
   border-radius: var(--radius-sm);
   padding: 7px 30px 7px 12px;
   font-size: 0.85rem;
@@ -458,7 +471,7 @@ a:hover { color: var(--gold); }
 .filter-select {
   background: var(--navy-raised);
   color: var(--white);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border-med);
   border-radius: var(--radius-sm);
   padding: 7px 30px 7px 12px;
   font-size: 0.85rem;
@@ -480,7 +493,7 @@ a:hover { color: var(--gold); }
 
 .filter-reset {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--border-strong);
   color: var(--white-dim);
   border-radius: var(--radius-sm);
   padding: 7px 14px;
@@ -518,7 +531,7 @@ a:hover { color: var(--gold); }
 
 .match-card {
   background: var(--navy-card);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
   padding: 20px;
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
@@ -601,9 +614,9 @@ a:hover { color: var(--gold); }
 }
 
 .card-label.final {
-  background: rgba(255,255,255,0.07);
+  background: var(--overlay-hover);
   color: var(--white-faint);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border-subtle);
 }
 
 /* Matchup row */
@@ -676,7 +689,7 @@ a:hover { color: var(--gold); }
   justify-content: space-between;
   gap: 8px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-faint);
 }
 
 .card-venue {
@@ -759,7 +772,7 @@ a:hover { color: var(--gold); }
 
 .streaming-card {
   background: var(--navy-card);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
   padding: 24px;
   transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
@@ -771,7 +784,7 @@ a:hover { color: var(--gold); }
 .streaming-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-  border-color: rgba(255,255,255,0.15);
+  border-color: var(--border-med);
 }
 
 .streaming-card-header {
@@ -823,7 +836,7 @@ a:hover { color: var(--gold); }
 .streaming-price {
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-faint);
   font-size: 0.82rem;
   color: var(--white-faint);
   display: flex;
@@ -841,7 +854,7 @@ a:hover { color: var(--gold); }
    ============================================================ */
 .footer {
   background: var(--navy-mid);
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--border-card);
   padding: 40px 24px;
   text-align: center;
   color: var(--white-faint);
@@ -959,8 +972,8 @@ a:hover { color: var(--gold); }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(255,255,255,0.06);
-  border: 1px dashed rgba(255,255,255,0.2);
+  background: var(--overlay-mid);
+  border: 1px dashed var(--border-dashed);
   color: var(--white-faint);
   border-radius: var(--radius-sm);
   padding: 6px 12px;
@@ -1000,7 +1013,7 @@ a:hover { color: var(--gold); }
 .card-attendance-row {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--border-faint);
 }
 
 .card-attendance {
@@ -1016,7 +1029,7 @@ a:hover { color: var(--gold); }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: var(--radius);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--border-faint);
 }
 
 .standings-table {
@@ -1027,8 +1040,8 @@ a:hover { color: var(--gold); }
 }
 
 .standings-table thead tr {
-  background: rgba(255,255,255,0.04);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--overlay-faint);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .standings-table th {
@@ -1047,7 +1060,7 @@ a:hover { color: var(--gold); }
 }
 
 .standings-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--overlay-faint);
   transition: background 0.15s;
 }
 
@@ -1056,7 +1069,7 @@ a:hover { color: var(--gold); }
 }
 
 .standings-table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
+  background: var(--overlay-dim);
 }
 
 .standings-table td {
@@ -1164,5 +1177,164 @@ a:hover { color: var(--gold); }
   text-align: center;
   padding: 40px;
   color: var(--white-faint);
+}
+
+/* ============================================================
+   THEME SWITCHER  (navbar toggle buttons)
+   ============================================================ */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background: transparent;
+  color: var(--white-dim);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.theme-btn .theme-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.theme-btn:hover {
+  background: var(--overlay-hover);
+  color: var(--white);
+}
+
+.theme-btn[aria-pressed="true"] {
+  background: var(--overlay-hover);
+  border-color: var(--border-med);
+  color: var(--white);
+}
+
+@media (max-width: 640px) {
+  .theme-btn .theme-label { display: none; }
+  .theme-btn { min-width: 44px; padding: 0; }
+}
+
+/* ============================================================
+   LIGHT THEME  (html[data-theme="light"])
+   ============================================================ */
+html[data-theme="light"],
+html[data-theme="easy"] {
+  --navy:          #f2f2f8;
+  --navy-mid:      #e5e5f0;
+  --navy-card:     #ffffff;
+  --navy-raised:   #eaeaf4;
+  --white:         #1a1a2e;
+  --white-dim:     #3a3a5a;
+  --white-faint:   #6a6a8a;
+
+  --bg-glass:      rgba(242,242,248,0.97);
+  --border-subtle: rgba(0,0,0,0.09);
+  --border-card:   rgba(0,0,0,0.08);
+  --border-faint:  rgba(0,0,0,0.06);
+  --border-med:    rgba(0,0,0,0.14);
+  --border-strong: rgba(0,0,0,0.16);
+  --border-dashed: rgba(0,0,0,0.20);
+  --overlay-hover: rgba(0,0,0,0.05);
+  --overlay-mid:   rgba(0,0,0,0.04);
+  --overlay-faint: rgba(0,0,0,0.03);
+  --overlay-dim:   rgba(0,0,0,0.02);
+
+  --shadow-sm:     0 2px 8px rgba(0,0,0,0.10);
+  --shadow-md:     0 4px 20px rgba(0,0,0,0.13);
+  --shadow-lg:     0 8px 40px rgba(0,0,0,0.18);
+  --shadow-red:    0 4px 20px rgba(233,69,96,0.25);
+  --shadow-glow:   0 0 30px rgba(233,69,96,0.08);
+}
+
+/* Hero gradient needs explicit light override */
+html[data-theme="light"] .hero,
+html[data-theme="easy"] .hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(233,69,96,0.10) 0%, transparent 70%),
+    linear-gradient(160deg, var(--navy-mid) 0%, var(--navy) 100%);
+}
+
+html[data-theme="light"] .hero::before,
+html[data-theme="easy"] .hero::before {
+  background:
+    radial-gradient(circle 500px at 20% 50%, rgba(15,52,96,0.08) 0%, transparent 70%),
+    radial-gradient(circle 400px at 80% 30%, rgba(233,69,96,0.06) 0%, transparent 70%);
+}
+
+/* Scrollbar for light mode */
+html[data-theme="light"] ::-webkit-scrollbar-track,
+html[data-theme="easy"] ::-webkit-scrollbar-track { background: var(--navy-mid); }
+html[data-theme="light"] ::-webkit-scrollbar-thumb,
+html[data-theme="easy"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); }
+
+/* Section separator */
+html[data-theme="light"] .section + .section,
+html[data-theme="easy"] .section + .section {
+  border-top-color: rgba(0,0,0,0.08);
+}
+
+/* Season tab dot */
+html[data-theme="light"] .season-tab-dot,
+html[data-theme="easy"] .season-tab-dot { color: rgba(0,0,0,0.35); }
+
+/* Loading spinner track */
+html[data-theme="light"] .loading-spinner,
+html[data-theme="easy"] .loading-spinner { border-color: var(--navy-raised); border-top-color: var(--red); }
+
+/* ============================================================
+   EASY READ THEME — light colors + larger text & spacing
+   ============================================================ */
+html[data-theme="easy"] {
+  font-size: 18px;
+}
+
+html[data-theme="easy"] .match-card,
+html[data-theme="easy"] .streaming-card {
+  padding: 24px;
+}
+
+html[data-theme="easy"] .team-badge {
+  width: 60px;
+  height: 60px;
+  font-size: 0.82rem;
+}
+
+html[data-theme="easy"] .score-display {
+  font-size: 1.8rem;
+}
+
+html[data-theme="easy"] .team-name {
+  font-size: 0.88rem;
+}
+
+html[data-theme="easy"] .filter-select,
+html[data-theme="easy"] .month-select,
+html[data-theme="easy"] .filter-reset,
+html[data-theme="easy"] .spoiler-btn,
+html[data-theme="easy"] .month-nav-btn {
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+
+html[data-theme="easy"] .season-tab {
+  padding: 10px 20px;
+  font-size: 0.92rem;
 }
 
