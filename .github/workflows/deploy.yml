@@ -38,6 +38,12 @@ jobs:
           echo "Data fetched:"
           ls -lh data/
 
+      - name: Inject build cache-buster
+        run: |
+          BUILD=$(git rev-parse --short HEAD)
+          sed -i "s/__BUILD__/$BUILD/g" index.html
+          echo "Cache buster: $BUILD"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

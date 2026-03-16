@@ -202,9 +202,10 @@
   </footer>
 
   <!-- Scripts: api client → static data → app logic -->
-  <script src="js/api.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <!-- ?v=__BUILD__ is replaced with the git SHA at deploy time -->
+  <script src="js/api.js?v=__BUILD__"></script>
+  <script src="js/data.js?v=__BUILD__"></script>
+  <script src="js/app.js?v=__BUILD__"></script>
 
 </body>
 </html>
