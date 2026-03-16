@@ -31,10 +31,14 @@ jobs:
         run: |
           mkdir -p data
           BASE="https://app.americansocceranalysis.com/api/v1"
-          curl -sf "$BASE/nwsl/teams"                    -o data/teams.json
-          curl -sf "$BASE/nwsl/stadia"                   -o data/stadia.json
-          curl -sf "$BASE/nwsl/games?season_name=2025"   -o data/games-2025.json
-          curl -sf "$BASE/nwsl/games?season_name=2024"   -o data/games-2024.json
+          curl -sf "$BASE/nwsl/teams"  -o data/teams.json
+          curl -sf "$BASE/nwsl/stadia" -o data/stadia.json
+          for SEASON in 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026; do
+            echo "Fetching $SEASON..."
+            curl -sf "$BASE/nwsl/games?season_name=$SEASON" \
+              -o "data/games-$SEASON.json" \
+              || echo '[]' > "data/games-$SEASON.json"
+          done
           echo "Data fetched:"
           ls -lh data/
 

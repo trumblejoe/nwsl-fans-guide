@@ -1,8 +1,8 @@
 /* ============================================================
    NWSL Fan's Guide — App Logic
-   Fetches live data from the American Soccer Analysis API,
-   merges with static display data, and renders the dashboard.
-   Vanilla JS — no build tools, no frameworks.
+   Fetches data from local JSON (built by GitHub Actions),
+   renders season schedule with pagination, spoiler toggle,
+   and team/platform filters.
    ============================================================ */
 
 (function () {
@@ -10,24 +10,24 @@
 
   const { platforms, teamColors, defaultTeamColor, assignStreaming } = NWSL_STATIC;
   const PLATFORM_MAP = Object.fromEntries(platforms.map(p => [p.id, p]));
-  const TODAY = new Date();
-
-  // A match is considered LIVE for up to 2 hours after kickoff
-  const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+  const TODAY        = new Date();
+  const LIVE_WINDOW  = 2 * 60 * 60 * 1000;
+  const MONTH_NAMES  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // ----------------------------------------------------------
-  //  App state
+  //  State
   // ----------------------------------------------------------
   let state = {
-    activeSeason:    '2025',
-    filterTeam:      'all',
-    filterPlatform:  'all',
-    filterMonth:     'all',
-    // Populated after API load:
-    teamMap:         {},   // team_id → team object (from API + colors)
-    stadiumMap:      {},   // stadium_id → stadium object
-    matches2025:     [],
-    matches2024:     [],
+    activeSeason:     null,
+    availableSeasons: [],        // sorted newest→oldest
+    activeMonth:      'all',
+    filterTeam:       'all',
+    filterPlatform:   'all',
+    spoilersHidden:   false,
+    revealedMatches:  new Set(),
+    teamMap:          {},
+    stadiumMap:       {},
+    seasonGames:      {},        // year → NormalizedGame[]
   };
 
   // ----------------------------------------------------------
@@ -36,13 +36,16 @@
   let dom = {};
 
   function cacheDOM() {
-    dom.seasonTabs     = document.querySelectorAll('.season-tab');
+    dom.seasonTabs     = document.getElementById('season-tabs');
     dom.matchesGrid    = document.getElementById('matches-grid');
     dom.matchCount     = document.getElementById('match-count');
     dom.filterTeam     = document.getElementById('filter-team');
     dom.filterPlatform = document.getElementById('filter-platform');
     dom.filterMonth    = document.getElementById('filter-month');
     dom.filterReset    = document.getElementById('filter-reset');
+    dom.monthPrev      = document.getElementById('month-prev');
+    dom.monthNext      = document.getElementById('month-next');
+    dom.spoilerToggle  = document.getElementById('spoiler-toggle');
     dom.streamingGrid  = document.getElementById('streaming-grid');
     dom.heroTeams      = document.getElementById('hero-teams-count');
     dom.heroMatches    = document.getElementById('hero-matches-count');
@@ -50,7 +53,7 @@
   }
 
   // ----------------------------------------------------------
-  //  Entry point
+  //  Boot
   // ----------------------------------------------------------
   async function boot() {
     cacheDOM();
@@ -58,134 +61,366 @@
     showLoadingState();
 
     try {
-      const { teams, stadia, games2025, games2024 } = await NWSL_API.loadAll();
+      const { teams, stadia, games } = await NWSL_API.loadAll();
       buildLookupMaps(teams, stadia);
-      state.matches2025 = normalizeGames(games2025);
-      state.matches2024 = normalizeGames(games2024);
+
+      NWSL_API.SEASONS.forEach(year => {
+        const raw = games[year];
+        state.seasonGames[year] = Array.isArray(raw) && raw.length > 0
+          ? normalizeGames(raw)
+          : [];
+      });
+
+      // Seasons with data, newest first
+      state.availableSeasons = NWSL_API.SEASONS
+        .filter(y => state.seasonGames[y].length > 0)
+        .reverse();
+
     } catch (err) {
       console.error('Failed to load NWSL data:', err);
       showErrorState();
       return;
     }
 
-    buildFilterOptions();
+    buildSeasonTabs();
+    buildPlatformOptions();
     wireEvents();
-    rebuildMonthFilter();
-    renderSchedule();
     updateHeroStats();
+
+    // Default to the most recent season
+    switchSeason(state.availableSeasons[0], true);
   }
 
   // ----------------------------------------------------------
-  //  Build lookup maps from API responses
+  //  Lookup maps
   // ----------------------------------------------------------
   function buildLookupMaps(teams, stadia) {
     teams.forEach(t => {
-      const colors = teamColors[t.team_id] || defaultTeamColor;
+      const c = teamColors[t.team_id] || defaultTeamColor;
       state.teamMap[t.team_id] = {
-        id:           t.team_id,
-        name:         t.team_name,
-        short:        t.team_short_name,
-        abbreviation: t.team_abbreviation,
-        bg:           colors.bg,
-        color:        colors.color,
+        id: t.team_id, name: t.team_name,
+        short: t.team_short_name, abbreviation: t.team_abbreviation,
+        bg: c.bg, color: c.color,
       };
     });
-
-    stadia.forEach(s => {
-      state.stadiumMap[s.stadium_id] = s;
-    });
+    stadia.forEach(s => { state.stadiumMap[s.stadium_id] = s; });
   }
 
   // ----------------------------------------------------------
-  //  Normalize raw API game objects into display-ready shape
+  //  Normalize raw API games
   // ----------------------------------------------------------
   function normalizeGames(games) {
-    return games
-      .map(g => {
-        const stadium = state.stadiumMap[g.stadium_id];
-        const venueParts = stadium
-          ? [stadium.stadium_name, stadium.city, stadium.province].filter(Boolean)
-          : [];
-        const venue = venueParts.length
-          ? `${venueParts[0]}${venueParts[1] ? ', ' + venueParts[1] : ''}${venueParts[2] ? ' ' + abbreviateState(venueParts[2]) : ''}`
-          : 'Venue TBD';
+    return games.map(g => {
+      const st     = state.stadiumMap[g.stadium_id];
+      const parts  = st ? [st.stadium_name, st.city, st.province].filter(Boolean) : [];
+      const venue  = parts.length
+        ? `${parts[0]}${parts[1] ? ', ' + parts[1] : ''}${parts[2] ? ' ' + abbrevState(parts[2]) : ''}`
+        : 'Venue TBD';
+      const date   = parseUTC(g.date_time_utc);
+      const score  = g.status === 'FullTime' && g.home_score != null
+        ? { home: g.home_score, away: g.away_score } : null;
+      let label = null;
+      if (g.knockout_game && g.matchday >= 27) {
+        label = ({ 27:'NWSL Quarterfinal', 28:'NWSL Semifinal', 29:'NWSL Championship Final' })[g.matchday]
+              || 'NWSL Playoff';
+      }
+      const penaltyNote = g.penalties
+        ? ` (${g.home_penalties}–${g.away_penalties} pens)` : g.extra_time ? ' (AET)' : '';
 
-        const dateObj = parseApiDate(g.date_time_utc);
+      return {
+        id: g.game_id, date, home: g.home_team_id, away: g.away_team_id,
+        venue, platform: assignStreaming(g), score, penaltyNote, label,
+        status: g.status, attendance: g.attendance, matchday: g.matchday,
+        knockout: g.knockout_game,
+      };
+    }).sort((a, b) => a.date - b.date);
+  }
 
-        const score = (g.status === 'FullTime' && g.home_score != null)
-          ? { home: g.home_score, away: g.away_score }
-          : null;
+  // ----------------------------------------------------------
+  //  Season tabs
+  // ----------------------------------------------------------
+  function buildSeasonTabs() {
+    const frag = document.createDocumentFragment();
+    state.availableSeasons.forEach((year, i) => {
+      const btn = document.createElement('button');
+      btn.className   = 'season-tab';
+      btn.dataset.season = year;
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', 'false');
+      btn.setAttribute('aria-controls', 'matches-grid');
+      if (i === 0) {
+        btn.innerHTML = `${year} <span class="season-tab-dot" aria-hidden="true">●</span>`;
+      } else {
+        btn.textContent = year;
+      }
+      frag.appendChild(btn);
+    });
+    dom.seasonTabs.innerHTML = '';
+    dom.seasonTabs.appendChild(frag);
+  }
 
-        // Penalties shootout note
-        let label = null;
-        if (g.knockout_game && g.matchday >= 27) {
-          const matchdayLabels = {
-            27: 'NWSL Quarterfinal',
-            28: 'NWSL Semifinal',
-            29: 'NWSL Championship Final',
-          };
-          label = matchdayLabels[g.matchday] || 'NWSL Playoff';
+  function switchSeason(year, initial = false) {
+    state.activeSeason    = year;
+    state.revealedMatches = new Set();
+    // Hide scores by default only for the newest (current) season
+    state.spoilersHidden  = (year === state.availableSeasons[0]);
+
+    // Reset filters unless this is the very first load
+    if (!initial) {
+      state.filterTeam     = 'all';
+      state.filterPlatform = 'all';
+      dom.filterTeam.value     = 'all';
+      dom.filterPlatform.value = 'all';
+    }
+
+    // Update tab UI
+    dom.seasonTabs.querySelectorAll('.season-tab').forEach(btn => {
+      const active = btn.dataset.season === year;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+
+    updateSpoilerToggle();
+    rebuildTeamOptions();
+    rebuildMonthFilter();
+
+    const defaultMonth = getDefaultMonth(year);
+    state.activeMonth       = defaultMonth;
+    dom.filterMonth.value   = defaultMonth;
+    updateMonthNav();
+    renderSchedule();
+  }
+
+  function getDefaultMonth(year) {
+    const months = getAvailableMonths(year);
+    if (!months.length) return 'all';
+    if (year === state.availableSeasons[0]) {
+      // Current season: jump to the month closest to today
+      const todayYM = TODAY.toISOString().slice(0, 7);
+      return months.find(m => m >= todayYM) || months[months.length - 1];
+    }
+    return months[0]; // Historical: start from the first matchday
+  }
+
+  // ----------------------------------------------------------
+  //  Filter options
+  // ----------------------------------------------------------
+  function rebuildTeamOptions() {
+    const usedIds = new Set(
+      (state.seasonGames[state.activeSeason] || []).flatMap(m => [m.home, m.away])
+    );
+    const sorted = [...usedIds]
+      .map(id => state.teamMap[id]).filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    dom.filterTeam.innerHTML = '<option value="all">All teams</option>';
+    const frag = document.createDocumentFragment();
+    sorted.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.id; o.textContent = t.name;
+      frag.appendChild(o);
+    });
+    dom.filterTeam.appendChild(frag);
+    dom.filterTeam.value = state.filterTeam;
+  }
+
+  function buildPlatformOptions() {
+    const frag = document.createDocumentFragment();
+    platforms.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name;
+      frag.appendChild(o);
+    });
+    dom.filterPlatform.innerHTML = '<option value="all">All platforms</option>';
+    dom.filterPlatform.appendChild(frag);
+  }
+
+  // ----------------------------------------------------------
+  //  Month filter + pagination
+  // ----------------------------------------------------------
+  function getAvailableMonths(season = state.activeSeason) {
+    // Months that have games after applying team & platform filters
+    return [...new Set(
+      (state.seasonGames[season] || [])
+        .filter(m => {
+          if (state.filterTeam !== 'all' && m.home !== state.filterTeam && m.away !== state.filterTeam) return false;
+          if (state.filterPlatform !== 'all' && m.platform !== state.filterPlatform) return false;
+          return true;
+        })
+        .map(m => m.date.toISOString().slice(0, 7))
+    )].sort();
+  }
+
+  function rebuildMonthFilter() {
+    const months = getAvailableMonths();
+    while (dom.filterMonth.options.length > 1) dom.filterMonth.remove(1);
+    const frag = document.createDocumentFragment();
+    months.forEach(ym => {
+      const o = document.createElement('option');
+      o.value = ym; o.textContent = fmtMonthYear(ym);
+      frag.appendChild(o);
+    });
+    dom.filterMonth.appendChild(frag);
+    // Restore or reset selection
+    if (months.includes(state.activeMonth)) {
+      dom.filterMonth.value = state.activeMonth;
+    } else {
+      dom.filterMonth.value = 'all';
+      state.activeMonth = 'all';
+    }
+    updateMonthNav();
+  }
+
+  function setMonth(ym) {
+    state.activeMonth     = ym;
+    dom.filterMonth.value = ym;
+    updateMonthNav();
+    renderSchedule();
+  }
+
+  function navigateMonth(dir) {
+    const months = getAvailableMonths();
+    if (!months.length) return;
+    if (state.activeMonth === 'all') {
+      setMonth(dir > 0 ? months[0] : months[months.length - 1]);
+      return;
+    }
+    const idx  = months.indexOf(state.activeMonth);
+    const next = idx + dir;
+    if (next >= 0 && next < months.length) setMonth(months[next]);
+  }
+
+  function updateMonthNav() {
+    const months = getAvailableMonths();
+    const idx    = months.indexOf(state.activeMonth);
+    const inMonth = state.activeMonth !== 'all';
+    dom.monthPrev.disabled = !inMonth || idx <= 0;
+    dom.monthNext.disabled = !inMonth || idx >= months.length - 1;
+    // Show the current month label in the nav bar
+    const label = document.getElementById('month-label');
+    if (label) label.textContent = inMonth ? fmtMonthYear(state.activeMonth) : 'All months';
+  }
+
+  // ----------------------------------------------------------
+  //  Spoiler toggle
+  // ----------------------------------------------------------
+  function toggleGlobalSpoilers() {
+    state.spoilersHidden = !state.spoilersHidden;
+    if (!state.spoilersHidden) state.revealedMatches = new Set();
+    updateSpoilerToggle();
+    renderSchedule();
+  }
+
+  function updateSpoilerToggle() {
+    if (!dom.spoilerToggle) return;
+    if (state.spoilersHidden) {
+      dom.spoilerToggle.innerHTML = '<span class="spoiler-icon">👁</span> Show All Scores';
+      dom.spoilerToggle.classList.add('spoiler-active');
+    } else {
+      dom.spoilerToggle.innerHTML = '<span class="spoiler-icon">🙈</span> Hide Scores';
+      dom.spoilerToggle.classList.remove('spoiler-active');
+    }
+  }
+
+  // ----------------------------------------------------------
+  //  Events
+  // ----------------------------------------------------------
+  function wireEvents() {
+    // Season tab clicks (event delegation)
+    dom.seasonTabs.addEventListener('click', e => {
+      const btn = e.target.closest('.season-tab');
+      if (btn && btn.dataset.season !== state.activeSeason) {
+        switchSeason(btn.dataset.season);
+      }
+    });
+
+    // Team filter
+    dom.filterTeam.addEventListener('change', () => {
+      state.filterTeam = dom.filterTeam.value;
+      rebuildMonthFilter();
+      syncActiveMonth();
+      renderSchedule();
+    });
+
+    // Platform filter
+    dom.filterPlatform.addEventListener('change', () => {
+      state.filterPlatform = dom.filterPlatform.value;
+      rebuildMonthFilter();
+      syncActiveMonth();
+      renderSchedule();
+    });
+
+    // Month dropdown
+    dom.filterMonth.addEventListener('change', () => {
+      state.activeMonth = dom.filterMonth.value;
+      updateMonthNav();
+      renderSchedule();
+    });
+
+    // Month prev / next
+    dom.monthPrev.addEventListener('click', () => navigateMonth(-1));
+    dom.monthNext.addEventListener('click', () => navigateMonth(1));
+
+    // Spoiler toggle
+    dom.spoilerToggle.addEventListener('click', toggleGlobalSpoilers);
+
+    // Reset button
+    dom.filterReset.addEventListener('click', () => {
+      state.filterTeam     = 'all';
+      state.filterPlatform = 'all';
+      dom.filterTeam.value     = 'all';
+      dom.filterPlatform.value = 'all';
+      rebuildMonthFilter();
+      const defaultMonth = getDefaultMonth(state.activeSeason);
+      state.activeMonth       = defaultMonth;
+      dom.filterMonth.value   = defaultMonth;
+      updateMonthNav();
+      renderSchedule();
+    });
+
+    // Reveal individual score (event delegation on grid)
+    dom.matchesGrid.addEventListener('click', e => {
+      const btn = e.target.closest('.reveal-score-btn');
+      if (btn) {
+        state.revealedMatches.add(btn.dataset.id);
+        // Replace just this card's VS block instead of full re-render
+        const card = btn.closest('.match-card');
+        if (card) {
+          const match = (state.seasonGames[state.activeSeason] || [])
+            .find(m => m.id === btn.dataset.id);
+          if (match) {
+            const vsBlock = card.querySelector('.vs-block');
+            if (vsBlock) vsBlock.outerHTML = buildScoreHTML(match);
+          }
         }
-
-        const penaltyNote = g.penalties
-          ? ` (${g.home_penalties}–${g.away_penalties} pens)`
-          : g.extra_time ? ' (AET)' : '';
-
-        return {
-          id:         g.game_id,
-          date:       dateObj,
-          dateUtc:    g.date_time_utc,
-          home:       g.home_team_id,
-          away:       g.away_team_id,
-          venue,
-          platform:   assignStreaming(g),
-          score,
-          penaltyNote,
-          label,
-          status:     g.status,    // 'FullTime' | 'PreMatch' | 'Abandoned'
-          attendance: g.attendance,
-          matchday:   g.matchday,
-          knockout:   g.knockout_game,
-        };
-      })
-      .sort((a, b) => a.date - b.date);
-  }
-
-  // ----------------------------------------------------------
-  //  Date helpers
-  // ----------------------------------------------------------
-  function parseApiDate(str) {
-    // "2025-11-23 01:00:00 UTC" → Date
-    return new Date(str.replace(' ', 'T').replace(' UTC', 'Z'));
-  }
-
-  // Abbreviate U.S. state names to 2-letter codes for display
-  const STATE_ABBR = {
-    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
-    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','District of Columbia':'DC',
-    'Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL',
-    'Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA',
-    'Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
-    'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV',
-    'New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY',
-    'North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
-    'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
-    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
-    'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI',
-    'Wyoming':'WY',
-  };
-  function abbreviateState(s) { return STATE_ABBR[s] || s; }
-
-  function formatDate(d) {
-    return d.toLocaleDateString('en-US', {
-      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-      timeZone: 'UTC',
+      }
     });
   }
 
-  function formatTime(d) {
-    // Display in local time
-    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  // Ensure activeMonth is still valid after filter change
+  function syncActiveMonth() {
+    const months = getAvailableMonths();
+    if (state.activeMonth !== 'all' && !months.includes(state.activeMonth)) {
+      state.activeMonth = months[0] || 'all';
+      dom.filterMonth.value = state.activeMonth;
+    }
+    updateMonthNav();
+  }
+
+  // ----------------------------------------------------------
+  //  Filtering
+  // ----------------------------------------------------------
+  function getActiveMatches() {
+    return state.seasonGames[state.activeSeason] || [];
+  }
+
+  function filterMatches(matches) {
+    return matches.filter(m => {
+      if (state.filterTeam !== 'all' && m.home !== state.filterTeam && m.away !== state.filterTeam) return false;
+      if (state.filterPlatform !== 'all' && m.platform !== state.filterPlatform) return false;
+      if (state.activeMonth !== 'all' && m.date.toISOString().slice(0, 7) !== state.activeMonth) return false;
+      return true;
+    });
   }
 
   // ----------------------------------------------------------
@@ -196,244 +431,97 @@
     if (match.score !== null)         return 'final';
     const elapsed = TODAY - match.date;
     if (elapsed < 0)                  return 'upcoming';
-    if (elapsed < LIVE_WINDOW_MS)     return 'live';
+    if (elapsed < LIVE_WINDOW)        return 'live';
     return 'final';
   }
 
   // ----------------------------------------------------------
-  //  Hero stats
+  //  Score HTML builder (used both in card build and in-place reveal)
   // ----------------------------------------------------------
-  function updateHeroStats() {
-    const teamCount    = Object.keys(state.teamMap).length;
-    const matchCount   = state.matches2025.length + state.matches2024.length;
-    const platCount    = platforms.length;
+  function buildScoreHTML(match) {
+    const status      = getMatchStatus(match);
+    const isRevealed  = !state.spoilersHidden || state.revealedMatches.has(match.id);
 
-    if (dom.heroTeams)     dom.heroTeams.textContent     = teamCount;
-    if (dom.heroMatches)   dom.heroMatches.textContent   = matchCount;
-    if (dom.heroPlatforms) dom.heroPlatforms.textContent = platCount;
-  }
-
-  // ----------------------------------------------------------
-  //  Loading / error states
-  // ----------------------------------------------------------
-  function showLoadingState() {
-    dom.matchesGrid.innerHTML = `
-      <div class="loading-state">
-        <div class="loading-spinner" aria-label="Loading matches…"></div>
-        <div class="loading-text">Loading live NWSL data…</div>
-      </div>`;
-    dom.matchCount.textContent = 'Loading…';
-  }
-
-  function showErrorState() {
-    dom.matchesGrid.innerHTML = `
-      <div class="no-results">
-        <div class="no-results-icon">⚠️</div>
-        <div class="no-results-text">Could not load schedule data</div>
-        <div class="no-results-sub">
-          Check your connection or visit
-          <a href="https://www.nwsl.com" target="_blank" rel="noopener">nwsl.com</a>
-          for official schedule information.
-        </div>
-      </div>`;
-    dom.matchCount.textContent = '';
-  }
-
-  // ----------------------------------------------------------
-  //  Build filter dropdowns
-  // ----------------------------------------------------------
-  function buildFilterOptions() {
-    // Teams — only include teams that appear in loaded games
-    const usedTeamIds = new Set([
-      ...state.matches2025.flatMap(m => [m.home, m.away]),
-      ...state.matches2024.flatMap(m => [m.home, m.away]),
-    ]);
-    const usedTeams = [...usedTeamIds]
-      .map(id => state.teamMap[id])
-      .filter(Boolean)
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const teamFrag = document.createDocumentFragment();
-    usedTeams.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.name;
-      teamFrag.appendChild(opt);
-    });
-    dom.filterTeam.appendChild(teamFrag);
-
-    // Platforms
-    const platFrag = document.createDocumentFragment();
-    platforms.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      platFrag.appendChild(opt);
-    });
-    dom.filterPlatform.appendChild(platFrag);
-  }
-
-  // ----------------------------------------------------------
-  //  Wire events
-  // ----------------------------------------------------------
-  function wireEvents() {
-    dom.seasonTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        state.activeSeason = tab.dataset.season;
-        dom.seasonTabs.forEach(t => t.classList.toggle('active', t === tab));
-        resetFilters(false);
-        rebuildMonthFilter();
-        renderSchedule();
-      });
-    });
-
-    [dom.filterTeam, dom.filterPlatform, dom.filterMonth].forEach(sel => {
-      sel.addEventListener('change', () => {
-        state.filterTeam     = dom.filterTeam.value;
-        state.filterPlatform = dom.filterPlatform.value;
-        state.filterMonth    = dom.filterMonth.value;
-        renderSchedule();
-      });
-    });
-
-    dom.filterReset.addEventListener('click', () => {
-      resetFilters(true);
-      renderSchedule();
-    });
-  }
-
-  function resetFilters(updateDOM = true) {
-    state.filterTeam     = 'all';
-    state.filterPlatform = 'all';
-    state.filterMonth    = 'all';
-    if (updateDOM) {
-      dom.filterTeam.value     = 'all';
-      dom.filterPlatform.value = 'all';
-      dom.filterMonth.value    = 'all';
+    if (status === 'live') {
+      return `<div class="vs-block"><div class="score-display" style="color:var(--red)">LIVE</div></div>`;
     }
-  }
-
-  // ----------------------------------------------------------
-  //  Month filter
-  // ----------------------------------------------------------
-  function rebuildMonthFilter() {
-    const matches = getActiveMatches();
-    const months = [...new Set(matches.map(m => {
-      return m.date.toISOString().slice(0, 7); // "YYYY-MM"
-    }))].sort();
-
-    while (dom.filterMonth.options.length > 1) dom.filterMonth.remove(1);
-
-    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    months.forEach(ym => {
-      const [year, month] = ym.split('-');
-      const opt = document.createElement('option');
-      opt.value = ym;
-      opt.textContent = `${MONTH_NAMES[+month - 1]} ${year}`;
-      dom.filterMonth.appendChild(opt);
-    });
-  }
-
-  // ----------------------------------------------------------
-  //  Active matches + filtering
-  // ----------------------------------------------------------
-  function getActiveMatches() {
-    return state.activeSeason === '2025' ? state.matches2025 : state.matches2024;
-  }
-
-  function filterMatches(matches) {
-    return matches.filter(m => {
-      if (state.filterTeam !== 'all' && m.home !== state.filterTeam && m.away !== state.filterTeam)
-        return false;
-      if (state.filterPlatform !== 'all' && m.platform !== state.filterPlatform)
-        return false;
-      if (state.filterMonth !== 'all') {
-        const ym = m.date.toISOString().slice(0, 7);
-        if (ym !== state.filterMonth) return false;
+    if ((status === 'final' || status === 'abandoned') && match.score) {
+      if (isRevealed) {
+        return `<div class="vs-block">
+          <div class="score-display">${match.score.home}–${match.score.away}</div>
+          ${match.penaltyNote ? `<div class="penalty-note">${match.penaltyNote}</div>` : ''}
+        </div>`;
       }
-      return true;
-    });
+      return `<div class="vs-block">
+        <button class="reveal-score-btn" data-id="${match.id}" aria-label="Reveal score for this match">
+          <span class="reveal-icon">👁</span> Reveal
+        </button>
+      </div>`;
+    }
+    // Upcoming
+    return `<div class="vs-block">
+      <div class="vs-label">VS</div>
+      <div class="kickoff-time">${fmtTime(match.date)}</div>
+    </div>`;
   }
 
   // ----------------------------------------------------------
-  //  Build a match card
+  //  Build match card element
   // ----------------------------------------------------------
   function buildMatchCard(match) {
     const status   = getMatchStatus(match);
-    const home     = state.teamMap[match.home] || { name: match.home, abbreviation: '?', bg: defaultTeamColor.bg, color: defaultTeamColor.color };
-    const away     = state.teamMap[match.away] || { name: match.away, abbreviation: '?', bg: defaultTeamColor.bg, color: defaultTeamColor.color };
+    const home     = state.teamMap[match.home] || fallbackTeam(match.home);
+    const away     = state.teamMap[match.away] || fallbackTeam(match.away);
     const platform = PLATFORM_MAP[match.platform] || PLATFORM_MAP['NWSL'];
+    const isRevealed = !state.spoilersHidden || state.revealedMatches.has(match.id);
 
     const card = document.createElement('article');
-    card.className = 'match-card' +
-      (status === 'final'    ? ' is-past' : '') +
-      (status === 'live'     ? ' is-live'  : '') +
-      (status === 'abandoned'? ' is-past'  : '');
+    card.className = 'match-card'
+      + (status === 'final' || status === 'abandoned' ? ' is-past' : '')
+      + (status === 'live'                            ? ' is-live'  : '');
 
     const statusText = { upcoming: 'Upcoming', live: '● Live', final: 'Final', abandoned: 'Abandoned' }[status];
-
-    // VS / score block
-    let vsHtml;
-    if (status === 'final' && match.score) {
-      vsHtml = `<div class="vs-block">
-                  <div class="score-display">${match.score.home}–${match.score.away}</div>
-                  ${match.penaltyNote ? `<div class="penalty-note">${match.penaltyNote}</div>` : ''}
-                </div>`;
-    } else if (status === 'live') {
-      vsHtml = `<div class="vs-block">
-                  <div class="score-display" style="color:var(--red)">LIVE</div>
-                </div>`;
-    } else {
-      vsHtml = `<div class="vs-block">
-                  <div class="vs-label">VS</div>
-                  <div class="kickoff-time">${formatTime(match.date)}</div>
-                </div>`;
-    }
-
-    const platStyle = `background:${platform.color};color:${platform.textColor};`;
-    const specialHtml = match.label ? `<div class="card-special-label">${match.label}</div>` : '';
-    const attendanceHtml = (status === 'final' && match.attendance)
-      ? `<span class="card-attendance" title="Attendance">${match.attendance.toLocaleString()} fans</span>`
+    const platStyle  = `background:${platform.color};color:${platform.textColor};`;
+    const attendHtml = (status === 'final' && match.attendance && isRevealed)
+      ? `<div class="card-attendance-row"><span class="card-attendance">🏟 ${match.attendance.toLocaleString()} fans</span></div>`
       : '';
 
     card.innerHTML = `
       <div class="card-meta">
-        <span class="card-date">${formatDate(match.date)}</span>
+        <span class="card-date">${fmtDate(match.date)}</span>
         <span class="card-label ${status}">${statusText}</span>
       </div>
-
       <div class="matchup">
         <div class="team team-home">
           <div class="team-badge" style="background:${home.bg};color:${home.color};">${home.abbreviation}</div>
           <div class="team-name">${home.name}</div>
         </div>
-
-        ${vsHtml}
-
+        ${buildScoreHTML(match)}
         <div class="team team-away">
           <div class="team-badge" style="background:${away.bg};color:${away.color};">${away.abbreviation}</div>
           <div class="team-name">${away.name}</div>
         </div>
       </div>
-
       <div class="card-footer">
         <span class="card-venue" title="${match.venue}">📍 ${match.venue}</span>
         <span class="platform-badge" style="${platStyle}" title="${platform.name}">${platform.icon}</span>
       </div>
-
-      ${attendanceHtml ? `<div class="card-attendance-row">${attendanceHtml}</div>` : ''}
-      ${specialHtml}
+      ${attendHtml}
+      ${match.label ? `<div class="card-special-label">${match.label}</div>` : ''}
     `;
-
     return card;
+  }
+
+  function fallbackTeam(id) {
+    return { name: id, abbreviation: '?', bg: defaultTeamColor.bg, color: defaultTeamColor.color };
   }
 
   // ----------------------------------------------------------
   //  Render schedule
   // ----------------------------------------------------------
   function renderSchedule() {
-    const allMatches = getActiveMatches();
-    const filtered   = filterMatches(allMatches);
+    const all      = getActiveMatches();
+    const filtered = filterMatches(all);
 
     dom.matchesGrid.innerHTML = '';
 
@@ -450,11 +538,45 @@
       dom.matchesGrid.appendChild(frag);
     }
 
-    dom.matchCount.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${allMatches.length}</strong> matches`;
+    const monthLabel = state.activeMonth !== 'all'
+      ? ` in ${fmtMonthYear(state.activeMonth)}` : '';
+    dom.matchCount.innerHTML =
+      `Showing <strong>${filtered.length}</strong> of <strong>${all.length}</strong> matches${monthLabel}`;
   }
 
   // ----------------------------------------------------------
-  //  Build streaming guide
+  //  Hero stats
+  // ----------------------------------------------------------
+  function updateHeroStats() {
+    const total = Object.values(state.seasonGames).reduce((s, g) => s + g.length, 0);
+    if (dom.heroTeams)     dom.heroTeams.textContent     = Object.keys(state.teamMap).length;
+    if (dom.heroMatches)   dom.heroMatches.textContent   = total;
+    if (dom.heroPlatforms) dom.heroPlatforms.textContent = platforms.length;
+  }
+
+  // ----------------------------------------------------------
+  //  Loading / error states
+  // ----------------------------------------------------------
+  function showLoadingState() {
+    dom.matchesGrid.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading NWSL data…</div>
+      </div>`;
+    dom.matchCount.textContent = 'Loading…';
+  }
+
+  function showErrorState() {
+    dom.matchesGrid.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">⚠️</div>
+        <div class="no-results-text">Could not load schedule data</div>
+        <div class="no-results-sub">Visit <a href="https://www.nwsl.com" target="_blank" rel="noopener">nwsl.com</a></div>
+      </div>`;
+  }
+
+  // ----------------------------------------------------------
+  //  Streaming guide
   // ----------------------------------------------------------
   function buildStreamingGuide() {
     const frag = document.createDocumentFragment();
@@ -474,12 +596,36 @@
         <div class="streaming-price">
           <span>Subscription</span>
           <strong>${p.subscription}</strong>
-        </div>
-      `;
+        </div>`;
       frag.appendChild(card);
     });
     dom.streamingGrid.appendChild(frag);
   }
+
+  // ----------------------------------------------------------
+  //  Helpers
+  // ----------------------------------------------------------
+  function parseUTC(str) {
+    return new Date(str.replace(' ', 'T').replace(' UTC', 'Z'));
+  }
+
+  const STATE_ABBR = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','District of Columbia':'DC',
+    'Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL',
+    'Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA',
+    'Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+    'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV',
+    'New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY',
+    'North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK',
+    'Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+    'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+    'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+  };
+  function abbrevState(s)    { return STATE_ABBR[s] || s; }
+  function fmtDate(d)        { return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric', timeZone:'UTC' }); }
+  function fmtTime(d)        { return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true }); }
+  function fmtMonthYear(ym)  { const [y,m] = ym.split('-'); return `${MONTH_NAMES[+m-1]} ${y}`; }
 
   // ----------------------------------------------------------
   //  Bootstrap

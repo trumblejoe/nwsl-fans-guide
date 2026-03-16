@@ -285,7 +285,7 @@ a:hover { color: var(--gold); }
 }
 
 /* ============================================================
-   SEASON TABS
+   SEASON TABS  — horizontally scrollable row
    ============================================================ */
 .season-tabs {
   display: flex;
@@ -294,13 +294,19 @@ a:hover { color: var(--gold); }
   padding: 4px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,0.08);
-  width: fit-content;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;          /* Firefox */
+  margin-bottom: 20px;
+  width: 100%;
 }
 
+.season-tabs::-webkit-scrollbar { display: none; }
+
 .season-tab {
-  padding: 8px 20px;
+  padding: 7px 16px;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -308,6 +314,8 @@ a:hover { color: var(--gold); }
   color: var(--white-dim);
   transition: background var(--transition), color var(--transition), box-shadow var(--transition);
   letter-spacing: 0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .season-tab.active {
@@ -321,19 +329,121 @@ a:hover { color: var(--gold); }
   color: var(--white);
 }
 
+.season-tab-dot {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.55rem;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
 /* ============================================================
-   FILTER BAR
+   FILTER BAR  +  MONTH NAV
    ============================================================ */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin-bottom: 24px;
-  padding: 16px 20px;
+  margin-bottom: 10px;
+  padding: 14px 18px;
   background: var(--navy-card);
   border-radius: var(--radius-md);
   border: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Spoiler toggle button */
+.spoiler-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--white-dim);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.spoiler-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--white);
+}
+
+.spoiler-btn.spoiler-active {
+  background: rgba(233,69,96,0.15);
+  border-color: rgba(233,69,96,0.4);
+  color: var(--red);
+}
+
+.spoiler-icon { font-size: 1em; }
+
+/* Month navigation bar */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 10px 18px;
+  background: var(--navy-card);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.month-nav-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy-raised);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.month-nav-btn:hover:not(:disabled) {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
+}
+
+.month-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Month dropdown inside nav — same style as filter-select */
+.month-select {
+  background: var(--navy-raised);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  padding: 7px 30px 7px 12px;
+  font-size: 0.85rem;
+  font-family: var(--font-main);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a8a8c0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  min-width: 160px;
+  flex: 1;
+  max-width: 220px;
+}
+
+.month-select:focus {
+  outline: none;
+  border-color: var(--red);
 }
 
 .filter-label {
@@ -793,14 +903,16 @@ a:hover { color: var(--gold); }
   .matches-grid   { grid-template-columns: 1fr; }
   .streaming-grid { grid-template-columns: 1fr; }
 
-  .season-tabs { width: 100%; }
-  .season-tab  { flex: 1; text-align: center; }
-
   .section-header { flex-direction: column; align-items: flex-start; }
 
   .filter-bar { gap: 8px; }
   .filter-select { min-width: 0; flex: 1; }
-  .match-count { width: 100%; margin-left: 0; }
+
+  .month-nav { flex-wrap: wrap; }
+  .month-select { min-width: 0; }
+  .match-count { width: 100%; margin-left: 0; text-align: center; }
+
+  .spoiler-btn { flex: 1; justify-content: center; }
 }
 
 @media (max-width: 400px) {
@@ -835,6 +947,32 @@ a:hover { color: var(--gold); }
   color: var(--white-dim);
   font-size: 0.9rem;
 }
+
+/* ---- Reveal score button (spoiler mode) ---- */
+.reveal-score-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.06);
+  border: 1px dashed rgba(255,255,255,0.2);
+  color: var(--white-faint);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.reveal-score-btn:hover {
+  background: rgba(233,69,96,0.15);
+  border-color: rgba(233,69,96,0.4);
+  color: var(--red);
+}
+
+.reveal-icon { font-size: 0.9em; }
 
 /* ---- Penalty / AET note on score ---- */
 .penalty-note {

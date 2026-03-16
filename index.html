@@ -3,10 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="NWSL Fan's Guide — schedules, streaming info, and more for National Women's Soccer League fans." />
+  <meta name="description" content="NWSL Fan's Guide — schedules, streaming info, and match results for every National Women's Soccer League season." />
   <title>NWSL Fan's Guide</title>
-
-  <!-- Preconnect for performance (no external fonts — use system stack) -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -17,17 +15,14 @@
   <header>
     <nav class="navbar" role="navigation" aria-label="Main navigation">
       <div class="navbar-inner">
-
         <a href="#" class="navbar-brand" aria-label="NWSL Fan's Guide home">
           <div class="navbar-logo" aria-hidden="true">NWSL</div>
           <span class="navbar-name">Fan's Guide</span>
         </a>
-
         <ul class="navbar-nav" role="list">
           <li><a href="#schedule">Schedule</a></li>
           <li><a href="#streaming">Streaming</a></li>
         </ul>
-
       </div>
     </nav>
   </header>
@@ -35,154 +30,119 @@
   <main>
 
     <!-- ======================================================
-         HERO SECTION
+         HERO
          ====================================================== -->
     <section class="hero" aria-labelledby="hero-heading">
       <div class="hero-inner">
-
         <div class="hero-badge" role="status">
           <span class="hero-badge-dot" aria-hidden="true"></span>
-          2025 Season Active
+          2026 Season Active
         </div>
-
         <h1 class="hero-title" id="hero-heading">
           The <span class="accent">NWSL</span><br />Fan's Guide
         </h1>
-
         <p class="hero-subtitle">
           Your complete source for National Women's Soccer League schedules,
-          streaming platforms, and match results — all in one place.
+          streaming platforms, and match results — every season since 2016.
         </p>
-
         <div class="hero-stats" role="list" aria-label="League statistics">
-
           <div class="hero-stat" role="listitem">
-            <div class="hero-stat-value" id="hero-teams-count">15</div>
+            <div class="hero-stat-value" id="hero-teams-count">—</div>
             <div class="hero-stat-label">Teams</div>
           </div>
-
           <div class="hero-stat-divider" aria-hidden="true"></div>
-
           <div class="hero-stat" role="listitem">
-            <div class="hero-stat-value" id="hero-matches-count">35</div>
+            <div class="hero-stat-value" id="hero-matches-count">—</div>
             <div class="hero-stat-label">Matches</div>
           </div>
-
           <div class="hero-stat-divider" aria-hidden="true"></div>
-
           <div class="hero-stat" role="listitem">
-            <div class="hero-stat-value" id="hero-platforms-count">6</div>
+            <div class="hero-stat-value" id="hero-platforms-count">—</div>
             <div class="hero-stat-label">Platforms</div>
           </div>
-
         </div>
       </div>
     </section>
 
     <!-- ======================================================
-         SCHEDULE SECTION
+         SCHEDULE
          ====================================================== -->
     <section class="section" id="schedule" aria-labelledby="schedule-heading">
       <div class="container">
 
+        <!-- Title -->
         <div class="section-header">
-          <h2 class="section-title" id="schedule-heading">
-            Match <span>Schedule</span>
-          </h2>
-
-          <!-- Season tab switcher -->
-          <div class="season-tabs" role="tablist" aria-label="Season selector">
-            <button
-              class="season-tab active"
-              role="tab"
-              aria-selected="true"
-              aria-controls="matches-grid"
-              data-season="2025"
-            >2025 Season</button>
-            <button
-              class="season-tab"
-              role="tab"
-              aria-selected="false"
-              aria-controls="matches-grid"
-              data-season="2024"
-            >2024 Historical</button>
-          </div>
+          <h2 class="section-title" id="schedule-heading">Match <span>Schedule</span></h2>
         </div>
 
-        <!-- Filter bar -->
+        <!-- Season tabs — populated by app.js -->
+        <div
+          class="season-tabs"
+          id="season-tabs"
+          role="tablist"
+          aria-label="Season selector"
+        ></div>
+
+        <!-- Filter bar: team, platform, spoiler, reset -->
         <div class="filter-bar" role="search" aria-label="Filter matches">
+          <span class="filter-label" aria-hidden="true">Filter</span>
 
-          <span class="filter-label" id="filter-bar-label">Filter</span>
-
-          <select
-            class="filter-select"
-            id="filter-team"
-            aria-label="Filter by team"
-          >
+          <select class="filter-select" id="filter-team" aria-label="Filter by team">
             <option value="all">All teams</option>
           </select>
 
-          <select
-            class="filter-select"
-            id="filter-platform"
-            aria-label="Filter by streaming platform"
-          >
+          <select class="filter-select" id="filter-platform" aria-label="Filter by streaming platform">
             <option value="all">All platforms</option>
           </select>
 
-          <select
-            class="filter-select"
-            id="filter-month"
-            aria-label="Filter by month"
-          >
+          <button class="spoiler-btn" id="spoiler-toggle" aria-pressed="false">
+            <span class="spoiler-icon">🙈</span> Hide Scores
+          </button>
+
+          <button class="filter-reset" id="filter-reset" aria-label="Reset all filters">Reset</button>
+        </div>
+
+        <!-- Month pagination bar -->
+        <div class="month-nav" aria-label="Navigate by month">
+          <button class="month-nav-btn" id="month-prev" aria-label="Previous month" disabled>‹</button>
+
+          <select class="month-select" id="filter-month" aria-label="Jump to month">
             <option value="all">All months</option>
           </select>
 
-          <button class="filter-reset" id="filter-reset" aria-label="Reset all filters">
-            Reset
-          </button>
+          <button class="month-nav-btn" id="month-next" aria-label="Next month" disabled>›</button>
 
           <span class="match-count" id="match-count" aria-live="polite" aria-atomic="true">
             Loading&hellip;
           </span>
-
         </div>
 
-        <!-- Match cards grid -->
+        <!-- Match cards -->
         <div
           class="matches-grid"
           id="matches-grid"
           role="list"
           aria-label="Match list"
           aria-live="polite"
-        >
-          <!-- Populated by app.js -->
-        </div>
+        ></div>
 
       </div>
     </section>
 
     <!-- ======================================================
-         STREAMING GUIDE SECTION
+         STREAMING GUIDE
          ====================================================== -->
     <section class="section" id="streaming" aria-labelledby="streaming-heading">
       <div class="container">
-
         <div class="section-header">
-          <h2 class="section-title" id="streaming-heading">
-            Streaming <span>Guide</span>
-          </h2>
+          <h2 class="section-title" id="streaming-heading">Streaming <span>Guide</span></h2>
         </div>
-
         <div
           class="streaming-grid"
           id="streaming-grid"
           role="list"
           aria-label="Streaming platforms"
-        >
-          <!-- Populated by app.js -->
-        </div>
-
+        ></div>
       </div>
     </section>
 
