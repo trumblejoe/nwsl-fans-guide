@@ -81,6 +81,7 @@
         .filter(y => state.seasonGames[y].length > 0)
         .reverse();
 
+      buildStandings(nwslStandings);
     } catch (err) {
       console.error('Failed to load NWSL data:', err);
       showErrorState();
@@ -91,7 +92,6 @@
     buildPlatformOptions();
     wireEvents();
     updateHeroStats();
-    buildStandings(nwslStandings);
 
     // Default to the most recent season
     switchSeason(state.availableSeasons[0], true);
