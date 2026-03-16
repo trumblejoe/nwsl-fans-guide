@@ -33,13 +33,30 @@ teams.forEach(t => {
   });
 });
 
+// Endeavor API uses abbreviated names that don't always match ASA's full names
+const TEAM_NAME_ALIASES = {
+  'portland thorns':    'portland thorns fc',
+  'boston legacy':      'boston legacy fc',
+  'denver summit':      'denver summit fc',
+  'racing louisville':  'racing louisville fc',
+  'san diego wave':     'san diego wave fc',
+  'seattle reign':      'seattle reign fc',
+  'chicago stars':      'chicago stars fc',
+};
+
+function findTeamWithAlias(name) {
+  if (!name) return null;
+  const key = name.toLowerCase().trim();
+  return teamByName[key] || teamByName[TEAM_NAME_ALIASES[key]] || null;
+}
+
 // Stadium name → ASA stadium_id
 const stadiumByName = {};
 stadia.forEach(s => {
   if (s.stadium_name) stadiumByName[s.stadium_name.toLowerCase().trim()] = s.stadium_id;
 });
 
-function findTeam(name)   { return name ? (teamByName[name.toLowerCase().trim()]   || null) : null; }
+function findTeam(name)   { return findTeamWithAlias(name); }
 function findStadium(name){ return name ? (stadiumByName[name.toLowerCase().trim()] || null) : null; }
 
 // ── Broadcaster → platform ID mapping ────────────────────────────────────
@@ -51,6 +68,7 @@ const BROADCASTER_MAP = {
   'espn':           'ESPN',
   'espn+':          'ESPNP', 'espn plus':     'ESPNP',
   'nwsl+':          'NWSL',  'nwsl plus':     'NWSL', 'nwsl streaming': 'NWSL',
+  'victory+':       'NWSL',  'victory plus':  'NWSL',
 };
 
 function broadcasterToPlatform(names) {
@@ -73,9 +91,9 @@ function normalizeApiMatch(m) {
 
   return {
     game_id:        `nwsl-${m.matchId || m.id}`,
-    date_time_utc:  m.kickOffDate || m.kickoffDate || m.date || null,
-    home_score:     m.homeScore  ?? (m.score ? m.score.home  : null),
-    away_score:     m.awayScore  ?? (m.score ? m.score.away  : null),
+    date_time_utc:  m.matchDateUtc || m.kickOffDate || m.kickoffDate || m.date || null,
+    home_score:     m.providerHomeScore ?? m.homeScorePush ?? m.homeScore ?? (m.score ? m.score.home  : null),
+    away_score:     m.providerAwayScore ?? m.awayScorePush ?? m.awayScore ?? (m.score ? m.score.away  : null),
     home_team_id:   findTeam(home.officialName || home.name || home.shortName) || home.teamId || null,
     away_team_id:   findTeam(away.officialName || away.name || away.shortName) || away.teamId || null,
     home_team_name: home.officialName || home.name || null,
@@ -83,7 +101,7 @@ function normalizeApiMatch(m) {
     stadium_id:     findStadium(m.stadiumName || m.venue) || null,
     stadium_name:   m.stadiumName || m.venue || null,
     season_name:    '2026',
-    matchday:       m.matchDay || m.roundNumber || m.round || null,
+    matchday:       (m.matchSet && m.matchSet.index) || m.matchDay || m.roundNumber || m.round || null,
     status:         normalizeStatus(m.status || m.matchStatus),
     knockout_game:  false,
     broadcasters,
@@ -102,11 +120,22 @@ function normalizeStatus(s) {
 
 function extractBroadcasters(m) {
   const out = [];
-  // Various Endeavor field names for broadcaster data
+
+  // Endeavor SDP format: editorial.broadcasters is an object with numbered keys
+  // e.g. { broadcasterNational1: "Prime Video|https://...", broadcasterNational2: "", ... }
+  const editorialBc = m.editorial && m.editorial.broadcasters;
+  if (editorialBc && typeof editorialBc === 'object' && !Array.isArray(editorialBc)) {
+    Object.values(editorialBc).forEach(val => {
+      if (typeof val === 'string' && val) {
+        const name = val.split('|')[0].trim();  // strip URL after pipe
+        if (name) out.push(name);
+      }
+    });
+  }
+
+  // Fallback: legacy array / string formats
   const sources = [
     m.broadcasters, m.broadcaster, m.broadcasterNational, m.broadcastNational,
-    m.editorial?.broadcastNational, m.editorial?.broadcasters,
-    m.national?.broadcasters,
   ].filter(Boolean);
 
   sources.forEach(src => {
@@ -116,9 +145,10 @@ function extractBroadcasters(m) {
         if (name) out.push(name);
       });
     } else if (typeof src === 'string') {
-      out.push(src);
+      out.push(src.split('|')[0].trim());
     }
   });
+
   return [...new Set(out)].filter(Boolean);
 }
 
