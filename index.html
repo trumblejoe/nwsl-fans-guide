@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NWSL Fan's Guide — schedules, streaming info, and more for National Women's Soccer League fans." />
+  <title>NWSL Fan's Guide</title>
+
+  <!-- Preconnect for performance (no external fonts — use system stack) -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ======================================================
+       NAVIGATION
+       ====================================================== -->
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="navbar-inner">
+
+        <a href="#" class="navbar-brand" aria-label="NWSL Fan's Guide home">
+          <div class="navbar-logo" aria-hidden="true">NWSL</div>
+          <span class="navbar-name">Fan's Guide</span>
+        </a>
+
+        <ul class="navbar-nav" role="list">
+          <li><a href="#schedule">Schedule</a></li>
+          <li><a href="#streaming">Streaming</a></li>
+        </ul>
+
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ======================================================
+         HERO SECTION
+         ====================================================== -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-inner">
+
+        <div class="hero-badge" role="status">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          2025 Season Active
+        </div>
+
+        <h1 class="hero-title" id="hero-heading">
+          The <span class="accent">NWSL</span><br />Fan's Guide
+        </h1>
+
+        <p class="hero-subtitle">
+          Your complete source for National Women's Soccer League schedules,
+          streaming platforms, and match results — all in one place.
+        </p>
+
+        <div class="hero-stats" role="list" aria-label="League statistics">
+
+          <div class="hero-stat" role="listitem">
+            <div class="hero-stat-value" id="hero-teams-count">15</div>
+            <div class="hero-stat-label">Teams</div>
+          </div>
+
+          <div class="hero-stat-divider" aria-hidden="true"></div>
+
+          <div class="hero-stat" role="listitem">
+            <div class="hero-stat-value" id="hero-matches-count">35</div>
+            <div class="hero-stat-label">Sample Matches</div>
+          </div>
+
+          <div class="hero-stat-divider" aria-hidden="true"></div>
+
+          <div class="hero-stat" role="listitem">
+            <div class="hero-stat-value" id="hero-platforms-count">6</div>
+            <div class="hero-stat-label">Platforms</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         SCHEDULE SECTION
+         ====================================================== -->
+    <section class="section" id="schedule" aria-labelledby="schedule-heading">
+      <div class="container">
+
+        <div class="section-header">
+          <h2 class="section-title" id="schedule-heading">
+            Match <span>Schedule</span>
+          </h2>
+
+          <!-- Season tab switcher -->
+          <div class="season-tabs" role="tablist" aria-label="Season selector">
+            <button
+              class="season-tab active"
+              role="tab"
+              aria-selected="true"
+              aria-controls="matches-grid"
+              data-season="2025"
+            >2025 Season</button>
+            <button
+              class="season-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="matches-grid"
+              data-season="2024"
+            >2024 Historical</button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar" role="search" aria-label="Filter matches">
+
+          <span class="filter-label" id="filter-bar-label">Filter</span>
+
+          <select
+            class="filter-select"
+            id="filter-team"
+            aria-label="Filter by team"
+          >
+            <option value="all">All teams</option>
+          </select>
+
+          <select
+            class="filter-select"
+            id="filter-platform"
+            aria-label="Filter by streaming platform"
+          >
+            <option value="all">All platforms</option>
+          </select>
+
+          <select
+            class="filter-select"
+            id="filter-month"
+            aria-label="Filter by month"
+          >
+            <option value="all">All months</option>
+          </select>
+
+          <button class="filter-reset" id="filter-reset" aria-label="Reset all filters">
+            Reset
+          </button>
+
+          <span class="match-count" id="match-count" aria-live="polite" aria-atomic="true">
+            Loading&hellip;
+          </span>
+
+        </div>
+
+        <!-- Match cards grid -->
+        <div
+          class="matches-grid"
+          id="matches-grid"
+          role="list"
+          aria-label="Match list"
+          aria-live="polite"
+        >
+          <!-- Populated by app.js -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================
+         STREAMING GUIDE SECTION
+         ====================================================== -->
+    <section class="section" id="streaming" aria-labelledby="streaming-heading">
+      <div class="container">
+
+        <div class="section-header">
+          <h2 class="section-title" id="streaming-heading">
+            Streaming <span>Guide</span>
+          </h2>
+        </div>
+
+        <div
+          class="streaming-grid"
+          id="streaming-grid"
+          role="list"
+          aria-label="Streaming platforms"
+        >
+          <!-- Populated by app.js -->
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================
+       FOOTER
+       ====================================================== -->
+  <footer class="footer">
+    <div class="footer-logo"><span>NWSL</span> Fan's Guide</div>
+    <p class="footer-note">
+      An unofficial fan resource. Schedule data is sample/demonstration data only.
+      For official schedules and streaming information visit
+      <a href="https://www.nwsl.com" target="_blank" rel="noopener noreferrer">nwsl.com</a>.
+    </p>
+  </footer>
+
+  <!-- Scripts: data first, then app logic -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
