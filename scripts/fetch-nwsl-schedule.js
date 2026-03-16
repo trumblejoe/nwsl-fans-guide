@@ -68,7 +68,7 @@ const BROADCASTER_MAP = {
   'espn':           'ESPN',
   'espn+':          'ESPNP', 'espn plus':     'ESPNP',
   'nwsl+':          'NWSL',  'nwsl plus':     'NWSL', 'nwsl streaming': 'NWSL',
-  'victory+':       'NWSL',  'victory plus':  'NWSL',
+  'victory+':       'VIC',   'victory plus':  'VIC',
 };
 
 function broadcasterToPlatform(names) {

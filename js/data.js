@@ -99,6 +99,16 @@ const NWSL_STATIC = {
       includes: 'Regional games, select national matches',
       subscription: 'From $11.99/mo',
     },
+    {
+      id: 'VIC',
+      name: 'Victory+',
+      color: '#1A1A1A',
+      textColor: '#F5C518',
+      icon: 'V+',
+      description: 'Free ad-supported streaming from Endeavor',
+      includes: 'Select NWSL games, free to watch',
+      subscription: 'Free (no subscription required)',
+    },
   ],
 
   // ----------------------------------------------------------
