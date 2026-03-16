@@ -1,31 +1,25 @@
 /* ============================================================
-   NWSL Fan's Guide — American Soccer Analysis API Client
-   https://app.americansocceranalysis.com/api/v1/__docs__/
-   No auth required. All endpoints return JSON arrays.
+   NWSL Fan's Guide — Data Loader
+   Loads pre-fetched JSON files from the data/ directory.
+   These are refreshed at deploy time by the GitHub Actions
+   workflow, which pulls from the American Soccer Analysis API.
+   No CORS issues — all requests are same-origin.
    ============================================================ */
 
 const NWSL_API = (() => {
-  const BASE = 'https://app.americansocceranalysis.com/api/v1';
-
-  async function get(path) {
-    const res = await fetch(`${BASE}${path}`);
-    if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
-    const data = await res.json();
-    if (data && data.error) throw new Error(`API error: ${data.error}`);
-    return data;
+  async function get(file) {
+    const res = await fetch(`./data/${file}`);
+    if (!res.ok) throw new Error(`Could not load ${file} (${res.status})`);
+    return res.json();
   }
 
   return {
-    fetchTeams:       ()       => get('/nwsl/teams'),
-    fetchStadia:      ()       => get('/nwsl/stadia'),
-    fetchGames:       (season) => get(`/nwsl/games?season_name=${season}`),
-
     async loadAll() {
       const [teams, stadia, games2025, games2024] = await Promise.all([
-        this.fetchTeams(),
-        this.fetchStadia(),
-        this.fetchGames('2025'),
-        this.fetchGames('2024'),
+        get('teams.json'),
+        get('stadia.json'),
+        get('games-2025.json'),
+        get('games-2024.json'),
       ]);
       return { teams, stadia, games2025, games2024 };
     }

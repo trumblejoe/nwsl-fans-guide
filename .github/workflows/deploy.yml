@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master]
+  schedule:
+    # Refresh data daily at 6 AM UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -23,6 +26,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Fetch NWSL data from American Soccer Analysis API
+        run: |
+          mkdir -p data
+          BASE="https://app.americansocceranalysis.com/api/v1"
+          curl -sf "$BASE/nwsl/teams"                    -o data/teams.json
+          curl -sf "$BASE/nwsl/stadia"                   -o data/stadia.json
+          curl -sf "$BASE/nwsl/games?season_name=2025"   -o data/games-2025.json
+          curl -sf "$BASE/nwsl/games?season_name=2024"   -o data/games-2024.json
+          echo "Data fetched:"
+          ls -lh data/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
